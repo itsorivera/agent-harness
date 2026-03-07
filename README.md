@@ -8,19 +8,32 @@ An implementation of a robust memory management strategy for AI agents using **L
 
 ## Core Memory Strategy
 
-This agent utilizes a multi-layered memory approach:
+This agent utilizes a multi-layered memory approach designed for **Multitenancy** and **Semantic Precision**:
 
-- **Semantic Memory:** Using `InMemoryStore` with vector embeddings (`all-MiniLM-L6-v2`) to store and retrieve relevant information across conversations.
-- **Dynamic Context:** Tools for creating, updating, and searching long-term memories based on user interactions and explicit preferences.
-- **User Profiling:** Persistent storage of user-specific details to personalize agent behavior.
+- **Semantic Memory:** Powered by `InMemoryStore` using `HuggingFaceEmbeddings` (`all-MiniLM-L6-v2`). This transforms natural language into 384-dimensional vectors for semantic search.
+- **Hierarchical Isolation (Namespaces):** Memory is strictly partitioned using a tuple-based path.
+  - Format: `(application_name, user_id, collection_type)`
+  - Example: `('email_assistant', 'lance', 'collection')`
+  - **Isolation:** Each `user_id` has a unique namespace, ensuring that private data from one user is never leaked to another during retrieval.
+  ![Memory Isolation](assets/memory-hierarchical-isolation.png)
+- **Active Memory Tools:**
+  - `manage_memory`: Allows the agent to write, update, or prune its long-term memory store dynamically.
+  - `search_memory`: Enables the agent to perform semantic lookups to retrieve relevant context from past interactions.
 
-## Session Management & Profiling (Current Focus)
+## Memory Architecture & Lifecycle
 
-### How to manage and organize storage for same-session memories?
+1.  **Identification:** The agent detects a piece of information worth remembering (e.g., "The user prefers afternoon meetings").
+2.  **Storage:** Through `manage_memory`, the fact is sent to the `InMemoryStore`.
+3.  **Vectorization:** The embedding model converts the text into a vector, which is indexed within the user's specific **Namespace**.
+4.  **Retrieval:** During a new conversation, the agent calls `search_memory`. The system searches the user's isolated namespace for the most semantically similar memories to the current query.
 
-To effectively organize memories within a single session while maintaining long-term relevance:
+## Session Management & Profiling
 
-1.  **Namespace Isolation:** Utilize the `namespace` parameter in `InMemoryStore` to separate global user knowledge from session-specific context (e.g., `namespace=("user_id", "session_id", "temp_context")`).
-2.  **Memory Consolidation:** Implement a background "distillation" process that summarizes chat history into core facts before storing them in long-term memory.
-3.  **Profiling & Ranking:** Use metadata filters to rank memories by recency and relevance within the current session's semantic namespace.
-4.  **Semantic Chunking:** Break down complex session data into atomic "memories" to avoid context window clutter and improve retrieval precision.
+### Organizer Strategy for Scalability
+
+To effectively organize memories while maintaining long-term relevance:
+
+1.  **Namespace Partitioning:** Use the `namespace` parameter to separate global user knowledge from session-specific metadata.
+2.  **Memory Distillation:** Implement background summarization to convert raw chat logs into atomic, high-value facts.
+3.  **Context Ranking:** Use metadata and semantic similarity to rank memories by recency and relevance within the current session.
+4.  **Atomic Chunking:** Store facts as independent units ("User likes Coffee") rather than large blobs of text to improve search accuracy.
