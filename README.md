@@ -4,7 +4,7 @@
 
 An implementation of a robust memory management strategy for AI agents using **LangGraph** and **LangMem**. This part of the agent harness focuses on providing agents with long-term persistence and semantic memory capabilities.
 
-![Memory Management Architecture](assets/image.png)
+![Memory Management Architecture](assets/manage-memory-agent-strategy.png)
 
 ## Core Memory Strategy
 
