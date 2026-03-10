@@ -4,8 +4,8 @@ from src.core.ports.checkpointer_port import CheckpointerPortSync, CheckpointerP
 from src.core.ports.llm_provider_port import LLMProviderPort
 from src.core.langgraph.nodes import NodeFunctions
 from src.core.langgraph.states import AgentState
-from src.utils.Logger import setup_logger
-from langchain_core.tools import BaseTool
+from src.utils.logger import get_logger
+from src.core.observability.metrics import track_latency
 from src.core.ports.graph_strategy_port import GraphStrategyPort
 
 
@@ -41,7 +41,7 @@ class LanggraphAgentAdapter(AgentPort):
         self.tools = tools
         self.agent_graph_compiled = None
         self.graph_strategy = graph_strategy
-        self.logger = setup_logger(f"AgentAdapter-{self.agent_name}")
+        self.logger = get_logger(f"{__name__}.{self.agent_name}")
     
     async def create_agent(self) -> Any:
         """
@@ -92,6 +92,7 @@ class LanggraphAgentAdapter(AgentPort):
         self.logger.info(f"Agente {self.agent_name} creado exitosamente")
         return self.agent_graph_compiled
 
+    @track_latency("agent_process_message")
     async def process_message(self, message: str, thread_id: str) -> Dict[str, Any]:
         """
         Procesa un mensaje con el agente.
