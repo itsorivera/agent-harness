@@ -19,14 +19,22 @@ class AppConfig(BaseSettings):
     DEFAULT_LLM_PROVIDER: str = "aws_bedrock"
     DEFAULT_LLM_MODEL: str = "anthropic.claude-3-sonnet-20240229-v1:0"
 
-    # Databases
+    # API Keys
+    HUGGINGFACE_API_KEY: Optional[str] = None
+    GROQ_API_KEY: Optional[str] = None
+
+    # Databases (Postgres)
     POSTGRES_CONNECTION_STRING: Optional[str] = None
-    postgres_user: Optional[str] = None
-    postgres_password: Optional[str] = None
-    postgres_host: Optional[str] = None
-    postgres_port: Optional[str] = None
-    postgres_database: Optional[str] = None
-    CONVERSATION_SCHEMA: Optional[str] = None
+    POSTGRES_USER: Optional[str] = None
+    POSTGRES_PASSWORD: Optional[str] = None
+    POSTGRES_HOST: Optional[str] = None
+    POSTGRES_PORT: Optional[str] = None
+    POSTGRES_DATABASE: Optional[str] = None
+    CONVERSATION_SCHEMA: Optional[str] = "public"
+
+    # Redis
+    REDIS_HOST: Optional[str] = "localhost"
+    REDIS_PORT: int = 6379
 
     # AWS Credentials
     AWS_ACCESS_KEY_ID: str = ""
@@ -42,7 +50,8 @@ class AppConfig(BaseSettings):
 
     class Config:
         env_file = ".env"
-        case_sensitive = True
+        case_sensitive = False
+        extra = "ignore"
 
 
 config = AppConfig()
