@@ -1,9 +1,8 @@
 from fastapi import FastAPI
-from src.adapter.rest import router as investments_router
+from src.adapter.rest.rest import router as investments_router
 
-from src.utils.logger import setup_logging, get_logger
+from src.utils.logger import get_logger
 
-setup_logging()
 logger = get_logger(__name__)
 
 def create_app() -> FastAPI:

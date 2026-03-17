@@ -18,7 +18,7 @@ def correlation_id_processor(logger: Any, method_name: str, event_dict: Dict[str
     event_dict["correlation_id"] = get_correlation_id()
     return event_dict
 
-def setup_logging(json_format: bool = False):
+def setup_logger(json_format: bool = False):
     """
     Configures structlog and standard logging.
     """

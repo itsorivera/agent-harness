@@ -10,11 +10,9 @@ import psycopg
 
 from langgraph.checkpoint.postgres import PostgresSaver
 
-from dotenv import load_dotenv
+from src.config.app_config import config
 from src.core.ports.checkpointer_port import CheckpointerPort, CheckpointerPortSync
-from src.utils.Logger import setup_logger
-
-load_dotenv()
+from src.utils.logger import setup_logger
 
 class PostgresCheckpointerAdapterAsync(CheckpointerPort):
     """Implementación de checkpoint usando PostgreSQL con LangGraph"""
@@ -52,13 +50,16 @@ class PostgresCheckpointerAdapterAsync(CheckpointerPort):
     
     def _build_postgres_uri(self) -> str:
         """Construye la URI de conexión a PostgreSQL"""
+        if config.POSTGRES_CONNECTION_STRING:
+            return config.POSTGRES_CONNECTION_STRING
+            
         return (
-            f"postgresql://{os.getenv('postgres_user')}:"
-            f"{os.getenv('postgres_password')}@"
-            f"{os.getenv('postgres_host')}:"
-            f"{os.getenv('postgres_port')}/"
-            f"{os.getenv('postgres_database')}?"
-            f"options=-csearch_path%3D{os.getenv('CONVERSATION_SCHEMA')}"
+            f"postgresql://{config.POSTGRES_USER}:"
+            f"{config.POSTGRES_PASSWORD}@"
+            f"{config.POSTGRES_HOST}:"
+            f"{config.POSTGRES_PORT}/"
+            f"{config.POSTGRES_DATABASE}?"
+            f"options=-csearch_path%3D{config.CONVERSATION_SCHEMA}"
         )
     
     async def cleanup(self) -> None:
@@ -101,13 +102,16 @@ class PostgresCheckpointerAdapterSync(CheckpointerPortSync):
 
     def _build_postgres_uri(self) -> str:
         """Construye la URI de conexión a PostgreSQL"""
+        if config.POSTGRES_CONNECTION_STRING:
+            return config.POSTGRES_CONNECTION_STRING
+            
         return (
-            f"postgresql://{os.getenv('postgres_user')}:"
-            f"{os.getenv('postgres_password')}@"
-            f"{os.getenv('postgres_host')}:"
-            f"{os.getenv('postgres_port')}/"
-            f"{os.getenv('postgres_database')}?"
-            f"options=-csearch_path%3D{os.getenv('CONVERSATION_SCHEMA')}"
+            f"postgresql://{config.POSTGRES_USER}:"
+            f"{config.POSTGRES_PASSWORD}@"
+            f"{config.POSTGRES_HOST}:"
+            f"{config.POSTGRES_PORT}/"
+            f"{config.POSTGRES_DATABASE}?"
+            f"options=-csearch_path%3D{config.CONVERSATION_SCHEMA}"
         )
 
     def cleanup(self) -> None:

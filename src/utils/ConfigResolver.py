@@ -1,6 +1,6 @@
 from typing import Optional, TypeVar, List
 from src.config.app_config import config
-from src.utils.Logger import setup_logger
+from src.utils.logger import setup_logger
 
 logger = setup_logger("config_resolver")
 

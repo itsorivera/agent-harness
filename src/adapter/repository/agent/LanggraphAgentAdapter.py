@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional
+from langchain_core.tools import BaseTool
 from src.core.ports.agent_port import AgentPort
 from src.core.ports.checkpointer_port import CheckpointerPortSync, CheckpointerPort
 from src.core.ports.llm_provider_port import LLMProviderPort

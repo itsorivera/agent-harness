@@ -4,7 +4,7 @@ from openai import AzureOpenAI
 from langchain_openai import AzureChatOpenAI
 
 from src.core.ports.llm_provider_port import LLMProviderPort
-from src.utils.Logger import setup_logger
+from src.utils.logger import setup_logger
 
 
 class IAFoundryLLMAdapter(LLMProviderPort):
@@ -17,7 +17,7 @@ class IAFoundryLLMAdapter(LLMProviderPort):
         api_version: str = "2024-08-01-preview",
         deployment_name: Optional[str] = None
     ):
-        self.logger = setup_logger(f"{_name_}.IAFoundryLLMAdapter")
+        self.logger = setup_logger(f"{__name__}.IAFoundryLLMAdapter")
         
         # Usar credenciales proporcionadas o variables de entorno
         self.azure_endpoint = azure_endpoint or os.getenv('AZ_ENDPOINT')
