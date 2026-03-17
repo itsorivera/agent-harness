@@ -1,21 +1,21 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
-from src.config.AgentDependenciesContainter import get_agent_investment_root
+from src.config.AgentDependenciesContainter import get_agent_general
 from src.core.ports.agent_port import AgentPort
 import uuid
-from src.utils.logger import set_correlation_id, get_logger
+from src.utils.logger import get_logger, set_correlation_id
+import traceback
 
-logger = get_logger(__name__)
-
-router = APIRouter(prefix="/api/v1/investments",
-                   tags=["investments"])
+logger = get_logger(__name__)   
+router = APIRouter(prefix="/api/v1/agents",
+                   tags=["general-agent"])
 
 @router.post(
-        path="/query",
-        description="Endpoint to query the investment research agent with a natural language question about investors, companies, industries or news.")
-async def query_investment_agent(
+        path="/general/query",
+        description="Endpoint to query the general agent with a natural language question.")
+async def query_general_agent(
     question: str,
-    agent: Annotated[AgentPort, Depends(get_agent_investment_root)]
+    agent: Annotated[AgentPort, Depends(get_agent_general)]
     ):
     try:
         correlation_id = str(uuid.uuid4())

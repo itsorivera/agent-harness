@@ -9,7 +9,7 @@ from src.core.ports.llm_provider_port import LLMProviderPort
 from src.adapter.repository.agent.LanggraphAgentAdapter import LanggraphAgentAdapter
 from src.core.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
 from src.core.ports.agent_port import AgentPort
-
+from src.core.prompts import GENERAL_AGENT_PROMPT
 from src.config.app_config import config
 from src.utils.logger import get_logger, set_correlation_id
 from src.utils.ConfigResolver import resolve_model_id, resolve_llm_provider
@@ -65,3 +65,20 @@ class AgentDependencies:
 @lru_cache()
 def get_agent_dependencies() -> AgentDependencies:
     return AgentDependencies()
+
+def get_agent_general() -> AgentPort:
+    dependencies = get_agent_dependencies()
+    llm_adapter = dependencies.get_llm_adapter()
+    checkpointer = dependencies.checkpointer_adapter
+    graph_strategy = ReActGraphStrategy()
+    
+    agent_adapter = LanggraphAgentAdapter(
+        agent_name="GeneralAgent",
+        llm_port=llm_adapter,
+        model_id=resolve_model_id(),
+        system_prompt=GENERAL_AGENT_PROMPT.render(),
+        checkpointer_port=checkpointer,
+        graph_strategy=graph_strategy,
+    )
+    
+    return agent_adapter
