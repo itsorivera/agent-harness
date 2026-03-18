@@ -18,11 +18,16 @@ def correlation_id_processor(logger: Any, method_name: str, event_dict: Dict[str
     event_dict["correlation_id"] = get_correlation_id()
     return event_dict
 
+_is_configured = False
+
 def setup_logger(json_format: bool = False):
     """
     Configures structlog and standard logging.
     """
-    
+    global _is_configured
+    if _is_configured:
+        return
+        
     processors = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
@@ -45,12 +50,15 @@ def setup_logger(json_format: bool = False):
         cache_logger_on_first_use=True,
     )
 
-    # Redirect standard logging to structlog if needed
+    # Redirect standard logging to structlog
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=logging.INFO,
     )
+    _is_configured = True
 
 def get_logger(name: str):
+    if not _is_configured:
+        setup_logger()
     return structlog.get_logger(name)
