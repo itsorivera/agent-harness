@@ -11,7 +11,7 @@ from src.core.ports.graph_strategy_port import GraphStrategyPort
 
 
 class LanggraphAgentAdapter(AgentPort):
-    def _init_(
+    def __init__(
             self,
             agent_name: str,
             llm_port: LLMProviderPort,

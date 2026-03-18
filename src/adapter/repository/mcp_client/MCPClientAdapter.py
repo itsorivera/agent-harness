@@ -67,7 +67,7 @@ class MCPClientAdapter(MCPClientPort):
     # Ruta del bundle de CA del sistema (contenedores Linux)
     SYSTEM_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
     
-    def _init_(
+    def __init__(
         self, 
         server_url: str, 
         server_name: str = "default",
@@ -94,7 +94,7 @@ class MCPClientAdapter(MCPClientPort):
         self._langchain_tools: Optional[List[BaseTool]] = None
         self._context_stack = None
         
-        self.logger = logging.getLogger(f"{_name_}.MCPClientAdapter")
+        self.logger = logging.getLogger(f"{__name__}.MCPClientAdapter")
     
     def _get_ssl_context(self) -> ssl.SSLContext | bool:
         """
@@ -157,7 +157,7 @@ class MCPClientAdapter(MCPClientPort):
                     kwargs["auth"] = auth
                 self.logger.debug(
                     f"Creando httpx.AsyncClient con headers={list(headers.keys()) if headers else None}, "
-                    f"timeout={timeout}, verify={type(ssl_context)._name_}"
+                    f"timeout={timeout}, verify={type(ssl_context).__name__}"
                 )
                 return httpx.AsyncClient(**kwargs)
             

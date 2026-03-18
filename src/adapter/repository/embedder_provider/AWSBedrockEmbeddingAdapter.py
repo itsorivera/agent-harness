@@ -12,7 +12,7 @@ import logging
 class AWSBedrockEmbeddingAdapter(EmbeddingProviderPort):
     """Implementación de Embeddings usando AWS Bedrock"""
     
-    def _init_(
+    def __init__(
         self,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,

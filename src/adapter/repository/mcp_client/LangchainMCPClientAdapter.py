@@ -10,7 +10,7 @@ class LangchainMCPClientAdapter(MCPClientPort):
     """
     TRANSPORT_TYPE = "streamable_http"
     
-    def _init_(self, server_url: str, server_name: str = "default"):
+    def __init__(self, server_url: str, server_name: str = "default"):
         """
         Inicializa el adaptador LangChain MCP.
         

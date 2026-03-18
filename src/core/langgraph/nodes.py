@@ -2,13 +2,13 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import SystemMessage, ToolMessage, HumanMessage, AIMessage
 from typing import Dict, Any, List
 import json
-from src.utils.logger import setup_logger
+from src.utils.logger import get_logger
 from .states import AgentState
 
-logger = setup_logger("nodes.py")
+logger = get_logger("nodes.py")
 
 class NodeFunctions:
-    def _init_(self, models: Dict[str, Any], system_prompt: str, tools: List[Any] = None):
+    def __init__(self, models: Dict[str, Any], system_prompt: str, tools: List[Any] = None):
         """
         Initialize NodeFunctions with a language model and tools.
         

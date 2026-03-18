@@ -12,13 +12,13 @@ from langgraph.checkpoint.postgres import PostgresSaver
 
 from src.config.app_config import config
 from src.core.ports.checkpointer_port import CheckpointerPort, CheckpointerPortSync
-from src.utils.logger import setup_logger
+from src.utils.logger import get_logger
 
 class PostgresCheckpointerAdapterAsync(CheckpointerPort):
     """Implementación de checkpoint usando PostgreSQL con LangGraph"""
     
-    def _init_(self):
-        self.logger = setup_logger(f"{__name__}.PostgresCheckpointerAdapter")
+    def __init__(self):
+        self.logger = get_logger(f"{__name__}.PostgresCheckpointerAdapter")
         self._pool = None
         self._checkpointer = None
         
@@ -72,8 +72,8 @@ class PostgresCheckpointerAdapterAsync(CheckpointerPort):
 class PostgresCheckpointerAdapterSync(CheckpointerPortSync):
     """Implementación de checkpoint usando PostgreSQL con LangGraph (sincronía)"""
 
-    def _init_(self):
-        self.logger = setup_logger(f"{__name__}.PostgresCheckpointerAdapterSync")
+    def __init__(self):
+        self.logger = get_logger(f"{__name__}.PostgresCheckpointerAdapterSync")
         self._conn = None
 
     def get_checkpointer(self):

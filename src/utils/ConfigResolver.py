@@ -1,8 +1,8 @@
 from typing import Optional, TypeVar, List
 from src.config.app_config import config
-from src.utils.logger import setup_logger
+from src.utils.logger import get_logger
 
-logger = setup_logger("config_resolver")
+logger = get_logger("config_resolver")
 
 T = TypeVar('T')
 

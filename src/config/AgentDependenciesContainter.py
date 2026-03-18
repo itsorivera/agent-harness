@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 class AgentDependencies:
     
-    def _init_(self):
+    def __init__(self):
         self._checkpointer_adapter: Optional[PostgresCheckpointerAdapterAsync] = None
         self._llm_adapters_cache: Dict[str, LLMProviderPort] = {}
         self._channel_mcp_client: Optional[MCPClientPort] = None
@@ -52,7 +52,7 @@ class AgentDependencies:
         
         # Create adapter
         adapter_class = self.SUPPORTED_LLM_PROVIDERS[provider]
-        logger.info(f"Inicializando LLM adapter: {provider} ({adapter_class._name_})")
+        logger.info(f"Inicializando LLM adapter: {provider} ({adapter_class.__name__})")
         
         adapter = adapter_class()
         
