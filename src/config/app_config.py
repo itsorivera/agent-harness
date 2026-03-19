@@ -17,7 +17,7 @@ class AppConfig(BaseSettings):
     # LLMs Providers
     VALID_LLM_PROVIDERS: ClassVar[List[str]] = ["aws_bedrock", "ia_foundry"]
     DEFAULT_LLM_PROVIDER: str = "aws_bedrock"
-    DEFAULT_LLM_MODEL: str = "anthropic.claude-3-sonnet-20240229-v1:0"
+    DEFAULT_LLM_MODEL: str = "us.amazon.nova-2-lite-v1:0"
 
     # API Keys
     HUGGINGFACE_API_KEY: Optional[str] = None
