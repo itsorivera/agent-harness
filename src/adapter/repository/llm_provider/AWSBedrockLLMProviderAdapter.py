@@ -62,3 +62,6 @@ class AWSLLMProviderAdapter(LLMProviderPort):
     self._client = None
     print("AWS Bedrock client cleaned up")
 
+  def get_provider_name(self) -> str:
+    return "AWS Bedrock (AWS LLM Provider)"
+

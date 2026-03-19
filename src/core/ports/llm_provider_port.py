@@ -16,3 +16,7 @@ class LLMProviderPort(ABC):
   @abstractmethod
   def cleanup(self):
     pass
+
+  @abstractmethod
+  def get_provider_name(self) -> str:
+    pass
