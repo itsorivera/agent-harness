@@ -25,6 +25,7 @@ class AgentDependencies:
         self._channel_mcp_client: Optional[MCPClientPort] = None
         self._block_card_mcp_client: Optional[MCPClientPort] = None
         self._security_mcp_client: Optional[MCPClientPort] = None
+        self._general_agent: Optional[AgentPort] = None
     
     @property
     def checkpointer_adapter(self) -> PostgresCheckpointerAdapterAsync:
@@ -62,23 +63,36 @@ class AgentDependencies:
         
         return adapter
 
+    async def get_general_agent(self) -> AgentPort:
+        """
+        Obtiene o crea el agente general, asegurando que esté inicializado.
+        """
+        if self._general_agent is None:
+            logger.info("Inicializando agente general...")
+            
+            llm_adapter = self.get_llm_adapter()
+            checkpointer = self.checkpointer_adapter
+            graph_strategy = ReActGraphStrategy()
+            
+            agent_adapter = LanggraphAgentAdapter(
+                agent_name="GeneralAgent",
+                llm_port=llm_adapter,
+                model_id=resolve_model_id(),
+                system_prompt=GENERAL_AGENT_PROMPT.render(),
+                checkpointer_port=checkpointer,
+                tools=[],
+                graph_strategy=graph_strategy,
+            )
+            
+            await agent_adapter.create_agent()
+            self._general_agent = agent_adapter
+            
+        return self._general_agent
+
 @lru_cache()
 def get_agent_dependencies() -> AgentDependencies:
     return AgentDependencies()
 
-def get_agent_general() -> AgentPort:
+async def get_agent_general() -> AgentPort:
     dependencies = get_agent_dependencies()
-    llm_adapter = dependencies.get_llm_adapter()
-    checkpointer = dependencies.checkpointer_adapter
-    graph_strategy = ReActGraphStrategy()
-    
-    agent_adapter = LanggraphAgentAdapter(
-        agent_name="GeneralAgent",
-        llm_port=llm_adapter,
-        model_id=resolve_model_id(),
-        system_prompt=GENERAL_AGENT_PROMPT.render(),
-        checkpointer_port=checkpointer,
-        graph_strategy=graph_strategy,
-    )
-    
-    return agent_adapter
+    return await dependencies.get_general_agent()
