@@ -1,13 +1,7 @@
-import sys
-import asyncio
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from src.adapter.rest.rest import router as investments_router
 from src.utils.logger import get_logger
-
-# Windows (ProactorEventLoop vs SelectorEventLoop)
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 logger = get_logger(__name__)
 
