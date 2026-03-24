@@ -2,21 +2,20 @@ import logging
 import sys
 import structlog
 from typing import Any, Dict
-import threading
-
-# Thread-local storage for correlation_id
-_context = threading.local()
+from contextvars import ContextVar
 
 def set_correlation_id(correlation_id: str):
-    _context.correlation_id = correlation_id
+    """Sets the correlation_id for the current execution context."""
+    structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
+
+def set_context_vars(**kwargs):
+    """Binds arbitrary variables (user_id, etc.) to the log context."""
+    structlog.contextvars.bind_contextvars(**kwargs)
 
 def get_correlation_id() -> str:
-    return getattr(_context, "correlation_id", "no-id")
+    """Retrieves the current correlation_id from context."""
+    return structlog.contextvars.get_contextvars().get("correlation_id", "no-id")
 
-def correlation_id_processor(logger: Any, method_name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
-    """Injects correlation_id into the event_dict."""
-    event_dict["correlation_id"] = get_correlation_id()
-    return event_dict
 
 _is_configured = False
 
@@ -34,7 +33,6 @@ def setup_logger(json_format: bool = False):
         structlog.processors.StackInfoRenderer(),
         structlog.dev.set_exc_info,
         structlog.processors.TimeStamper(fmt="iso"),
-        correlation_id_processor,
     ]
 
     if json_format:
