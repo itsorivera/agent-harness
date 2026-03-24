@@ -1,3 +1,9 @@
+import sys
+import asyncio
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from src.adapter.rest.rest import router as investments_router
