@@ -4,14 +4,10 @@ from src.config.AgentDependenciesContainter import get_agent_general
 from src.core.ports.agent_port import AgentPort
 import uuid
 from src.utils.logger import get_logger, set_context_vars, get_correlation_id
-from pydantic import BaseModel
 import traceback
+from .schemas import QueryRequest
 
-logger = get_logger(__name__)   
-
-class QueryRequest(BaseModel):
-    question: str
-    user_id: str
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/v1/agents",
                    tags=["general-agent"])
@@ -24,7 +20,7 @@ async def query_general_agent(
     agent: Annotated[AgentPort, Depends(get_agent_general)]
     ):
     try:
-        # Inyectamos el user_id al contexto
+        # Inject user_id into the logging context for better traceability
         set_context_vars(user_id=request.user_id)
         logger.info("New query request", question=request.question)
         
