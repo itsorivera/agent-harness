@@ -11,6 +11,7 @@ from src.core.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStr
 from src.core.ports.agent_port import AgentPort
 from src.core.prompts import GENERAL_AGENT_PROMPT
 from src.config.app_config import config
+from src.config.agent_personalities import GENERAL_AGENT_PERSONALITY
 from src.utils.logger import get_logger, set_correlation_id
 from src.utils.ConfigResolver import resolve_model_id, resolve_llm_provider
 from datetime import datetime
@@ -78,7 +79,9 @@ class AgentDependencies:
                 agent_name="GeneralAgent",
                 llm_port=llm_adapter,
                 model_id=resolve_model_id(),
-                system_prompt=GENERAL_AGENT_PROMPT.render(),
+                system_prompt=GENERAL_AGENT_PROMPT.render(
+                    **GENERAL_AGENT_PERSONALITY.model_dump()
+                ),
                 checkpointer_port=checkpointer,
                 tools=[],
                 graph_strategy=graph_strategy,
