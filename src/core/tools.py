@@ -100,3 +100,9 @@ def place_order(
         "type": order_type,
         "action": action,
     }
+
+FINANCIAL_ADVISOR_TOOLS = [
+    lookup_stock_symbol,
+    fetch_stock_data_raw,
+    place_order,
+]
