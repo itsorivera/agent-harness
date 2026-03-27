@@ -1,6 +1,7 @@
 from typing import Optional, Dict
 from functools import lru_cache
 from fastapi import Depends
+from src.core.tools import FINANCIAL_ADVISOR_TOOLS
 from src.adapter.repository.memory_persistence.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync
 from src.adapter.repository.llm_provider.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
 from src.adapter.repository.llm_provider.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
@@ -9,7 +10,7 @@ from src.core.ports.llm_provider_port import LLMProviderPort
 from src.adapter.repository.agent.LanggraphAgentAdapter import LanggraphAgentAdapter
 from src.core.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
 from src.core.ports.agent_port import AgentPort
-from src.core.prompts import GENERAL_AGENT_PROMPT
+from src.core.prompts import GENERAL_AGENT_PROMPT, FINANCIAL_ADVISOR_SYSTEM_PROMPT
 from src.config.app_config import config
 from src.config.agent_personalities import GENERAL_AGENT_PERSONALITY
 from src.utils.logger import get_logger, set_correlation_id
@@ -91,6 +92,31 @@ class AgentDependencies:
             self._general_agent = agent_adapter
             
         return self._general_agent
+    
+    async def get_financial_advisor_agent(self) -> AgentPort:
+        """
+        Crea un agente especializado en asesoría financiera, con herramientas específicas.
+        """
+        logger.info("Inicializando agente de asesoría financiera...")
+        
+        llm_adapter = self.get_llm_adapter()
+        checkpointer = self.checkpointer_adapter
+        graph_strategy = ReActGraphStrategy()
+        
+        agent_adapter = LanggraphAgentAdapter(
+            agent_name="FinancialAdvisorAgent",
+            llm_port=llm_adapter,
+            model_id=resolve_model_id(),
+            system_prompt=FINANCIAL_ADVISOR_SYSTEM_PROMPT.render(
+                **GENERAL_AGENT_PERSONALITY.model_dump()
+            ),
+            checkpointer_port=checkpointer,
+            tools=FINANCIAL_ADVISOR_TOOLS,
+            graph_strategy=graph_strategy,
+        )
+        
+        await agent_adapter.create_agent()
+        return agent_adapter
 
 @lru_cache()
 def get_agent_dependencies() -> AgentDependencies:
@@ -99,3 +125,7 @@ def get_agent_dependencies() -> AgentDependencies:
 async def get_agent_general() -> AgentPort:
     dependencies = get_agent_dependencies()
     return await dependencies.get_general_agent()
+
+async def get_financial_advisor_agent() -> AgentPort:
+    dependencies = get_agent_dependencies()
+    return await dependencies.get_financial_advisor_agent()
