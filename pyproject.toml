@@ -25,4 +25,5 @@ dependencies = [
     "sentence-transformers>=5.2.3",
     "structlog>=25.5.0",
     "uvicorn>=0.41.0",
+    "yfinance>=1.2.0",
 ]
