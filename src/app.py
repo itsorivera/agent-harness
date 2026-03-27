@@ -5,6 +5,7 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from src.adapter.rest.rest import router as investments_router
 from src.utils.logger import get_logger, set_correlation_id
@@ -20,6 +21,16 @@ def create_app() -> FastAPI:
         description="Agent Harness endpoints",
         version="1.0.0",
     )
+    
+    # Enable CORS for the frontend apps
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # For production, limit this to the specific Vercel URL
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.include_router(investments_router)
 
     @app.middleware("http")
