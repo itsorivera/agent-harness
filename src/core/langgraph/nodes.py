@@ -2,23 +2,26 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import SystemMessage, ToolMessage, HumanMessage, AIMessage
 from typing import Dict, Any, List
 import json
+from langgraph.types import interrupt
 from src.utils.logger import get_logger
 from .states import AgentState
 
 logger = get_logger("nodes.py")
 
 class NodeFunctions:
-    def __init__(self, models: Dict[str, Any], system_prompt: str, tools: List[Any] = None):
+    def __init__(self, models: Dict[str, Any], system_prompt: str, tools: List[Any] = None, hitl_config: Dict[str, Any] = None):
         """
         Initialize NodeFunctions with a language model and tools.
         
         Args:
             models: Dictionary containing the language models (e.g., conversation_llm)
             tools: List of tools to bind to the LLM. If None, no tools will be bound.
+            hitl_config: Configuration for human-in-the-loop interruption rules.
         """
         self.conversation_llm = models.get("conversation_llm")
         self.system_prompt = system_prompt
         self.tools = tools or []
+        self._hitl_config = hitl_config or {}
         
         # Bind tools to the LLM if tools are provided. #TODO revisar logica para bindear tools
         if self.tools:
@@ -55,6 +58,66 @@ class NodeFunctions:
                     ), 
                 ],
             }
+
+    async def hitl_gate(self, state: AgentState):
+        """
+        Human-In-The-Loop gate node.
+        Checks if any tool calls require human approval and interrupts if necessary.
+        """
+        last_msg = state["messages_tools"][-1]
+        if not isinstance(last_msg, AIMessage) or not last_msg.tool_calls:
+            return state
+
+        # Filter tool calls that need review based on injected hitl_config
+        tools_to_review = [tc for tc in last_msg.tool_calls if tc["name"] in self._hitl_config]
+        
+        if not tools_to_review:
+            return state
+
+        logger.info(f"Interrupting for human review of tools: {[tc['name'] for tc in tools_to_review]}")
+        
+        # Trigger the interrupt
+        # Client will resume with Command(resume={"decisions": [...]})
+        human_response = interrupt({
+            "action": "review_tools",
+            "tool_calls": tools_to_review,
+            "rules": self._hitl_config,
+            "description": "Tool execution requires approval"
+        })
+
+
+        decisions = human_response.get("decisions", [])
+        revised_tool_calls = []
+        artificial_tool_messages = []
+        
+        for tool_call in last_msg.tool_calls:
+            decision = next((d for d in decisions if d.get("id") == tool_call.get("id") or d.get("name") == tool_call.get("name")), None)
+            
+            if not decision or decision["type"] == "approve":
+                revised_tool_calls.append(tool_call)
+            elif decision["type"] == "edit":
+                edited_call = tool_call.copy()
+                edited_call["args"] = decision["edited_args"]
+                revised_tool_calls.append(edited_call)
+                logger.info(f"Tool call {tool_call['name']} edited by human.")
+            elif decision["type"] == "reject":
+                logger.info(f"Tool call {tool_call['name']} rejected by human.")
+                artificial_tool_messages.append(
+                    ToolMessage(
+                        content=decision.get("message", "Tool execution rejected by user."),
+                        name=tool_call["name"],
+                        tool_call_id=tool_call["id"],
+                        status="error"
+                    )
+                )
+
+        # Update the AI message with either approved or edited tool calls
+        last_msg.tool_calls = revised_tool_calls
+        
+        # Return updated state
+        return {
+            "messages_tools": [last_msg] + artificial_tool_messages
+        }
 
     async def tool_node(self, state: AgentState):
         outputs = []

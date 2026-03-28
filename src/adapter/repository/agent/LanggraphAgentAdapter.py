@@ -20,6 +20,7 @@ class LanggraphAgentAdapter(AgentPort):
             checkpointer_port: CheckpointerPort | CheckpointerPortSync,
             tools: List[BaseTool],
             graph_strategy: Optional[GraphStrategyPort] = None,
+            hitl_config: Optional[Dict[str, Any]] = None,
     ): 
         """
         Inicializa el adaptador de agente langgraph.
@@ -33,6 +34,7 @@ class LanggraphAgentAdapter(AgentPort):
             checkpointer_port: Puerto para persistencia de estado
             tools: Lista de herramientas ya resueltas para el agente (inyectadas, no fetcheadas)
             graph_strategy: Estrategia para construir el grafo del agente
+            hitl_config: Configuración para human-in-the-loop
         """
         self.agent_name = agent_name
         self.llm_port = llm_port
@@ -42,7 +44,9 @@ class LanggraphAgentAdapter(AgentPort):
         self.tools = tools
         self.agent_graph_compiled = None
         self.graph_strategy = graph_strategy
+        self.hitl_config = hitl_config or {}
         self.logger = get_logger(f"{__name__}.{self.agent_name}")
+
     
     async def create_agent(self) -> Any:
         """
@@ -68,9 +72,16 @@ class LanggraphAgentAdapter(AgentPort):
         
         # Crear funciones de nodos
         self.logger.info(f"Creando funciones de nodos para {self.agent_name}...")
-        node_funcs = NodeFunctions(models, system_prompt=self.system_prompt, tools=self.tools)
+        node_funcs = NodeFunctions(
+            models, 
+            system_prompt=self.system_prompt, 
+            tools=self.tools,
+            hitl_config=self.hitl_config
+        )
+
         node_functions = {
             "call_model": node_funcs.call_model,
+            "hitl_gate": node_funcs.hitl_gate,
             "tool_node": node_funcs.tool_node,
             "should_continue": node_funcs.should_continue
         }
@@ -94,31 +105,44 @@ class LanggraphAgentAdapter(AgentPort):
         return self.agent_graph_compiled
 
     @track_latency("agent_process_message")
-    async def process_message(self, message: str, thread_id: str) -> Dict[str, Any]:
+    async def process_message(self, message: Optional[str] = None, thread_id: str = "default", decisions: Optional[List[Any]] = None) -> Dict[str, Any]:
         """
-        Procesa un mensaje con el agente.
+        Procesa un mensaje con el agente o reanuda si hay decisiones de HITL.
         
         Args:
-            message: Consulta o comando del usuario
+            message: Consulta o comando del usuario (Opcional si es reanudación)
             thread_id: ID del hilo de conversación para mantener contexto
+            decisions: Decisiones de supervisión humana (HITL)
             
         Returns:
             Diccionario con los mensajes y el resultado del procesamiento
-            
-        Raises:
-            RuntimeError: Si el agente no ha sido inicializado
         """
+        from langgraph.types import Command
+
         if not self.agent_graph_compiled:
             raise RuntimeError("El agente no ha sido inicializado. Llama a create_agent() primero.")
         
-        self.logger.info(f"Procesando solicitud de agente {self.agent_name} en thread {thread_id}")
-        self.logger.debug(f"Mensaje de usuario: {message}")
+        self.logger.info(f"Petición para agente {self.agent_name} en thread {thread_id}")
         
-        config = {"configurable": {"thread_id": thread_id}}
-        result = await self.agent_graph_compiled.ainvoke({"messages_tools": message}, config)
+        config = {"configurable": {
+            "thread_id": thread_id,
+            "user_id": "itsorivera"
+            }}
 
-        self.logger.debug(f"Respuesta final generada de agente {self.agent_name}: {result['messages'][-1].content}")
+        # Logic to determine input (new message vs HITL resumption)
+        if decisions:
+            self.logger.info(f"Reanudando hilo {thread_id} con decisiones HITL")
+            input_data = Command(resume={"decisions": decisions})
+        else:
+            self.logger.info(f"Iniciando nuevo procesamiento en hilo {thread_id}")
+            input_data = {"messages_tools": message}
+
+        result = await self.agent_graph_compiled.ainvoke(input_data, config)
+
+        final_msg = result['messages'][-1].content if hasattr(result['messages'][-1], 'content') else str(result['messages'][-1])
+        self.logger.debug(f"Respuesta final generada de agente {self.agent_name}: {final_msg}")
         return result
+
     
     async def cleanup(self) -> None:
         """

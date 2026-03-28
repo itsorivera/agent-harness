@@ -103,6 +103,13 @@ class AgentDependencies:
         checkpointer = self.checkpointer_adapter
         graph_strategy = ReActGraphStrategy()
         
+        # Injection of HITL configuration
+        hitl_config = {
+            "place_order": {"allowed_decisions": ["approve", "edit", "reject"]},
+            # "transfer_funds": {"allowed_decisions": ["approve", "reject"]},
+            # "delete_record": {"allowed_decisions": ["approve"]} # Only approve or nothing
+        }
+
         agent_adapter = LanggraphAgentAdapter(
             agent_name="FinancialAdvisorAgent",
             llm_port=llm_adapter,
@@ -113,7 +120,9 @@ class AgentDependencies:
             checkpointer_port=checkpointer,
             tools=FINANCIAL_ADVISOR_TOOLS,
             graph_strategy=graph_strategy,
+            hitl_config=hitl_config
         )
+
         
         await agent_adapter.create_agent()
         return agent_adapter
