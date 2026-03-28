@@ -10,14 +10,14 @@ class AppConfig(BaseSettings):
     APP_TITLE: str = "Agent Harness API"
     API_VERSION: str = "1.0.0"
     API_AR_ROUTE: str = "/api/agent-harness"
-    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
     HOST: str = "127.0.0.1"
     PORT: int = 8000
 
     # LLMs Providers
     VALID_LLM_PROVIDERS: ClassVar[List[str]] = ["aws_bedrock", "ia_foundry"]
     DEFAULT_LLM_PROVIDER: str = "aws_bedrock"
-    DEFAULT_LLM_MODEL: str = "us.amazon.nova-2-lite-v1:0"
+    DEFAULT_LLM_MODEL: str = "us.anthropic.claude-sonnet-4-20250514-v1:0"
 
     # API Keys
     HUGGINGFACE_API_KEY: Optional[str] = None

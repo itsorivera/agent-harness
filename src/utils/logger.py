@@ -19,13 +19,16 @@ def get_correlation_id() -> str:
 
 _is_configured = False
 
-def setup_logger(json_format: bool = False):
+def setup_logger(json_format: bool = False, level: str = "INFO"):
     """
     Configures structlog and standard logging.
     """
     global _is_configured
     if _is_configured:
         return
+        
+    # Standardize log level
+    log_level = getattr(logging, level.upper(), logging.INFO)
         
     processors = [
         structlog.contextvars.merge_contextvars,
@@ -42,7 +45,7 @@ def setup_logger(json_format: bool = False):
 
     structlog.configure(
         processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+        wrapper_class=structlog.make_filtering_bound_logger(log_level),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,
@@ -52,11 +55,12 @@ def setup_logger(json_format: bool = False):
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
-        level=logging.INFO,
+        level=log_level,
     )
     _is_configured = True
 
 def get_logger(name: str):
     if not _is_configured:
-        setup_logger()
+        from src.config.app_config import config
+        setup_logger(level=config.LOG_LEVEL)
     return structlog.get_logger(name)
