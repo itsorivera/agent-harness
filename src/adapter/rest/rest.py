@@ -22,9 +22,13 @@ async def query_general_agent(
     try:
         # Inject user_id into the logging context for better traceability
         set_context_vars(user_id=request.user_id)
-        logger.info("New query request", question=request.question)
+        logger.info("New query request", thread_id=request.thread_id)
         
-        response = await agent.process_message(request.question, request.user_id)
+        response = await agent.process_message(
+            message=request.question, 
+            thread_id=request.thread_id,
+            decisions=request.decisions
+        )
         return {
             "response": response, 
             "correlation_id": get_correlation_id()
@@ -43,9 +47,13 @@ async def query_financial_advisor_agent(
     try:
         # Inject user_id into the logging context for better traceability
         set_context_vars(user_id=request.user_id)
-        logger.info("New financial advisor query request", question=request.question)
+        logger.info("New financial advisor query request", thread_id=request.thread_id)
         
-        response = await agent.process_message(request.question, request.user_id)
+        response = await agent.process_message(
+            message=request.question, 
+            thread_id=request.thread_id,
+            decisions=request.decisions
+        )
         return {
             "response": response, 
             "correlation_id": get_correlation_id()
