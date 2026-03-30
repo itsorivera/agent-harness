@@ -57,6 +57,11 @@ def setup_logger(json_format: bool = False, level: str = "INFO"):
         stream=sys.stdout,
         level=log_level,
     )
+
+    # When app level is DEBUG, these libraries become too chatty.
+    for logger_name in ["botocore", "boto3", "urllib3", "asyncio", "httpx", "uvicorn.access", "uvicorn.error"]:
+        logging.getLogger(logger_name).setLevel(logging.WARNING)
+
     _is_configured = True
 
 def get_logger(name: str):
