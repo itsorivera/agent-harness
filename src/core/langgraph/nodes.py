@@ -47,7 +47,16 @@ class NodeFunctions:
                 for block in response.content
                 if isinstance(block, dict) and block.get("type") == "text"
             ])
-        logger.info(f"Response last message: {text_content}")
+        # Log detail for better observability (sanitizing for Windows Terminal encoding issues)
+        if text_content:
+            safe_text = text_content.encode("ascii", "ignore").decode("ascii")
+            logger.info(f"Response last message (text): {safe_text}")
+        
+        if response.tool_calls:
+            logger.info(f"Response tool calls: {[tc['name'] for tc in response.tool_calls]}")
+        
+        if not text_content and not response.tool_calls:
+            logger.warning("LLM Response was empty (no text and no tool calls found).")
         return {"messages_tools": [response],
                 "messages": [
                     HumanMessage(state["messages_tools"][-1].content),
@@ -91,25 +100,37 @@ class NodeFunctions:
         artificial_tool_messages = []
         
         for tool_call in last_msg.tool_calls:
-            decision = next((d for d in decisions if d.get("id") == tool_call.get("id") or d.get("name") == tool_call.get("name")), None)
+            # Find the decision corresponding to this tool_call ID or name
+            decision = None
+            for d in decisions:
+                d_id = d.get("id") if isinstance(d, dict) else getattr(d, "id", None)
+                d_name = d.get("name") if isinstance(d, dict) else getattr(d, "name", None)
+                if d_id == tool_call.get("id") or (d_name == tool_call.get("name") and d_name):
+                    decision = d
+                    break
+
+            # Process decision
+            d_type = (decision.get("type", "approve") if isinstance(decision, dict) else getattr(decision, "type", "approve")) if decision else "approve"
             
-            if not decision or decision["type"] == "approve":
+            if not decision or d_type == "approve":
                 revised_tool_calls.append(tool_call)
-            elif decision["type"] == "edit":
+            elif d_type == "edit":
                 edited_call = tool_call.copy()
-                edited_call["args"] = decision["edited_args"]
+                edited_call["args"] = decision.get("edited_args") if isinstance(decision, dict) else getattr(decision, "edited_args", {})
                 revised_tool_calls.append(edited_call)
                 logger.info(f"Tool call {tool_call['name']} edited by human.")
-            elif decision["type"] == "reject":
+            elif d_type == "reject":
                 logger.info(f"Tool call {tool_call['name']} rejected by human.")
+                msg = decision.get("message", "Tool execution rejected by user.") if isinstance(decision, dict) else getattr(decision, "message", "Tool execution rejected by user.")
                 artificial_tool_messages.append(
                     ToolMessage(
-                        content=decision.get("message", "Tool execution rejected by user."),
+                        content=msg,
                         name=tool_call["name"],
                         tool_call_id=tool_call["id"],
                         status="error"
                     )
                 )
+
 
         # Update the AI message with either approved or edited tool calls
         last_msg.tool_calls = revised_tool_calls

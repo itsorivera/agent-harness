@@ -132,7 +132,10 @@ class LanggraphAgentAdapter(AgentPort):
         # Logic to determine input (new message vs HITL resumption)
         if decisions:
             self.logger.info(f"Reanudando hilo {thread_id} con decisiones HITL")
-            input_data = Command(resume={"decisions": decisions})
+            # Convertimos modelos Pydantic a dicts si es necesario para evitar AttributeError en nodos.py
+            decisions_data = [d.model_dump() if hasattr(d, "model_dump") else d for d in decisions]
+            input_data = Command(resume={"decisions": decisions_data})
+
         else:
             self.logger.info(f"Iniciando nuevo procesamiento en hilo {thread_id}")
             input_data = {"messages_tools": message}
@@ -140,7 +143,10 @@ class LanggraphAgentAdapter(AgentPort):
         result = await self.agent_graph_compiled.ainvoke(input_data, config)
 
         final_msg = result['messages'][-1].content if hasattr(result['messages'][-1], 'content') else str(result['messages'][-1])
-        self.logger.debug(f"Respuesta final generada de agente {self.agent_name}: {final_msg}")
+        # Sanitizamos el log para evitar errores en Windows con emojis
+        safe_final_msg = final_msg.encode("ascii", "ignore").decode("ascii")
+        self.logger.debug(f"Respuesta final generada de agente {self.agent_name}: {safe_final_msg}")
+
         return result
 
     
