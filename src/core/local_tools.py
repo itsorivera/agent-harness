@@ -23,3 +23,5 @@ search_memory_tool = create_search_memory_tool(
         "collection"
     )
 )
+
+MEMORY_TOOLS = [manage_memory_tool, search_memory_tool]

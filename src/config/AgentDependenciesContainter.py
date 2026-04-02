@@ -2,6 +2,7 @@ from typing import Optional, Dict
 from functools import lru_cache
 from fastapi import Depends
 from src.core.tools import FINANCIAL_ADVISOR_TOOLS
+from src.core.local_tools import MEMORY_TOOLS
 from src.adapter.repository.memory_persistence.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync
 from src.adapter.repository.llm_provider.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
 from src.adapter.repository.llm_provider.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
@@ -84,7 +85,7 @@ class AgentDependencies:
                     **GENERAL_AGENT_PERSONALITY.model_dump()
                 ),
                 checkpointer_port=checkpointer,
-                tools=[],
+                tools=MEMORY_TOOLS,
                 graph_strategy=graph_strategy,
             )
             
