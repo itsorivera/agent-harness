@@ -1,0 +1,26 @@
+index:
+  name: agent_memories
+  prefix: memory
+  key_separator: ":"
+  storage_type: json
+
+fields:
+  - name: content
+    type: text
+  - name: memory_type
+    type: tag
+  - name: metadata
+    type: text
+  - name: created_at
+    type: text
+  - name: user_id
+    type: tag
+  - name: memory_id
+    type: tag
+  - name: embedding
+    type: vector
+    attrs:
+      algorithm: flat
+      dims: 1536
+      distance_metric: cosine
+      datatype: float32
