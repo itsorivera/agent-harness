@@ -143,15 +143,38 @@ class NodeFunctions:
     async def tool_node(self, state: AgentState):
         outputs = []
         for tool_call in state["messages_tools"][-1].tool_calls:
-            logger.info(f"Invoking tool: {tool_call['name']} with args: {tool_call['args']}")
-            tool_result = await self.tools_by_name[tool_call["name"]].ainvoke(tool_call["args"])
-            outputs.append(
-                ToolMessage(
-                    content=json.dumps(tool_result),
-                    name=tool_call["name"],
-                    tool_call_id=tool_call["id"],
+            tool_name = tool_call["name"]
+            tool_id = tool_call["id"]
+            
+            try:
+                logger.info(f"Invoking tool: {tool_name} with args: {tool_call['args']}")
+                
+                # Verify if tool exists (prevents KeyError from renames/refactors)
+                if tool_name not in self.tools_by_name:
+                    error_msg = f"Tool '{tool_name}' not found in current configuration. It might have been renamed or removed."
+                    logger.error(error_msg)
+                    outputs.append(ToolMessage(content=error_msg, name=tool_name, tool_call_id=tool_id, status="error"))
+                    continue
+
+                tool_result = await self.tools_by_name[tool_name].ainvoke(tool_call["args"])
+                outputs.append(
+                    ToolMessage(
+                        content=json.dumps(tool_result),
+                        name=tool_name,
+                        tool_call_id=tool_id,
+                    )
                 )
-            )
+            except Exception as e:
+                error_msg = f"Error executing tool '{tool_name}': {str(e)}"
+                logger.error(error_msg)
+                outputs.append(
+                    ToolMessage(
+                        content=error_msg,
+                        name=tool_name,
+                        tool_call_id=tool_id,
+                        status="error"
+                    )
+                )
         return {"messages_tools": outputs}
 
     def should_continue(self, state: AgentState):
