@@ -17,6 +17,14 @@ from src.config.agent_personalities import GENERAL_AGENT_PERSONALITY
 from src.utils.logger import get_logger, set_correlation_id
 from src.utils.ConfigResolver import resolve_model_id, resolve_llm_provider
 from datetime import datetime
+import os
+from redis.asyncio import Redis
+from redisvl.index import AsyncSearchIndex
+from redisvl.schema.schema import IndexSchema
+from src.core.ports.ltm_repository_port import LTMRepositoryPort
+from src.adapter.repository.memory_persistence.LTM.RedisLTMRepositoryAdapter import RedisLTMRepositoryAdapter
+from src.core.ports.embedder_provider_port import EmbeddingProviderPort
+from src.adapter.repository.embedder_provider.AWSBedrockEmbeddingAdapter import AWSBedrockEmbeddingAdapter
 
 logger = get_logger(__name__)
 
@@ -29,6 +37,10 @@ class AgentDependencies:
         self._block_card_mcp_client: Optional[MCPClientPort] = None
         self._security_mcp_client: Optional[MCPClientPort] = None
         self._general_agent: Optional[AgentPort] = None
+        self._ltm_repository: Optional[LTMRepositoryPort] = None
+        self._redis_client: Optional[Redis] = None
+        self._redis_index: Optional[AsyncSearchIndex] = None
+        self._embedding_adapter: Optional[EmbeddingProviderPort] = None
     
     @property
     def checkpointer_adapter(self) -> PostgresCheckpointerAdapterAsync:
@@ -37,6 +49,55 @@ class AgentDependencies:
             logger.info("Inicializando PostgresCheckpointerAdapter")
             self._checkpointer_adapter = PostgresCheckpointerAdapterAsync()
         return self._checkpointer_adapter
+    
+    @property
+    def redis_client(self) -> Redis:
+        """Lazy loading of Redis client"""
+        if self._redis_client is None:
+            redis_url = f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}"
+            logger.info(f"Connecting to Redis at {redis_url}")
+            self._redis_client = Redis.from_url(redis_url)
+        return self._redis_client
+
+    async def get_ltm_index(self) -> AsyncSearchIndex:
+        """Lazy loading and initialization of RedisVL search index"""
+        if self._redis_index is None:
+            logger.info("Initializing RedisVL Long Term Memory Index")
+            # Load schema from YAML (the one we created in db/memory)
+            # Find the path relative to the root/package
+            schema_path = os.path.join(os.getcwd(), "db", "memory", "redis_ltm_schema.yaml")
+            schema = IndexSchema.from_yaml(schema_path)
+            
+            self._redis_index = AsyncSearchIndex(
+                schema=schema,
+                redis_client=self.redis_client
+            )
+            # Ensure index exists (idempotent, omg)
+            if not await self._redis_index.exists():
+                logger.info(f"Creating new Redis index: {schema.index.name}")
+                await self._redis_index.create()
+                
+        return self._redis_index
+
+    async def get_ltm_repository(self) -> LTMRepositoryPort:
+        """Lazy loading of LTM Repository adapter"""
+        if self._ltm_repository is None:
+            index = await self.get_ltm_index()
+            logger.info("Initializing RedisLTMRepositoryAdapter")
+            self._ltm_repository = RedisLTMRepositoryAdapter(index=index)
+        return self._ltm_repository
+    
+    @property
+    def embedding_adapter(self) -> EmbeddingProviderPort:
+        """Lazy loading of Embedding provider"""
+        if self._embedding_adapter is None:
+            logger.info("Initializing AWSBedrockEmbeddingAdapter")
+            self._embedding_adapter = AWSBedrockEmbeddingAdapter(
+                aws_access_key_id=config.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY,
+                region_name=config.AWS_REGION
+            )
+        return self._embedding_adapter
     
     SUPPORTED_LLM_PROVIDERS = {
         "aws_bedrock": AWSLLMProviderAdapter,
@@ -71,10 +132,16 @@ class AgentDependencies:
         Obtiene o crea el agente general, asegurando que esté inicializado.
         """
         if self._general_agent is None:
-            logger.info("Inicializando agente general...")
+            logger.info("Initializing general agent...")
             
             llm_adapter = self.get_llm_adapter()
             checkpointer = self.checkpointer_adapter
+            ltm_repo = await self.get_ltm_repository()
+            embedder = self.embedding_adapter
+            
+            # Use factory to break circular dependency
+            memory_tools = get_memory_tools(ltm_repo, embedder)
+            
             graph_strategy = ReActGraphStrategy()
             
             agent_adapter = LanggraphAgentAdapter(
@@ -85,7 +152,7 @@ class AgentDependencies:
                     **GENERAL_AGENT_PERSONALITY.model_dump()
                 ),
                 checkpointer_port=checkpointer,
-                tools=MEMORY_TOOLS,
+                tools=memory_tools,
                 graph_strategy=graph_strategy,
             )
             
