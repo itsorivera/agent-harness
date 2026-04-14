@@ -21,6 +21,6 @@ fields:
     type: vector
     attrs:
       algorithm: flat
-      dims: 1536
+      dims: 1024
       distance_metric: cosine
       datatype: float32
