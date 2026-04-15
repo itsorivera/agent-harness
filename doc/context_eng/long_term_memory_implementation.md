@@ -53,7 +53,7 @@ Allows the agent to search for past knowledge to answer current queries.
 
 ---
 
-## Professional Integration & Dependency Injection
+## Integration & Dependency Injection
 
 To maintain a clean and maintainable codebase, we implemented a **Factory Pattern** to register these tools in the `AgentDependenciesContainer`.
 
