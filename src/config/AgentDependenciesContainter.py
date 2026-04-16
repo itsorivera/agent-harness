@@ -16,11 +16,11 @@ from src.core.tools import FINANCIAL_ADVISOR_TOOLS
 from src.core.local_tools import get_memory_tools
 from src.adapter.agent.langgraph.LanggraphAgentAdapter import LanggraphAgentAdapter
 from src.adapter.agent.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
-from src.adapter.repository.llm_provider.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
-from src.adapter.repository.llm_provider.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
-from src.adapter.repository.memory_persistence.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync
-from src.adapter.repository.embedder_provider.AWSBedrockEmbeddingAdapter import AWSBedrockEmbeddingAdapter
-from src.adapter.repository.memory_persistence.LTM.RedisLTMRepositoryAdapter import RedisLTMRepositoryAdapter
+from src.adapter.providers.llm.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
+from src.adapter.providers.llm.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
+from src.adapter.memory_persistence.STM.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync
+from src.adapter.memory_persistence.LTM.RedisLTMRepositoryAdapter import RedisLTMRepositoryAdapter
+from src.adapter.providers.embedder.AWSBedrockEmbeddingAdapter import AWSBedrockEmbeddingAdapter
 from src.config.app_config import config
 from src.config.agent_personalities import GENERAL_AGENT_PERSONALITY
 from src.utils.logger import get_logger
