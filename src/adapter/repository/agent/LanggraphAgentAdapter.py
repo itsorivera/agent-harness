@@ -105,13 +105,20 @@ class LanggraphAgentAdapter(AgentPort):
         return self.agent_graph_compiled
 
     @track_latency("agent_process_message")
-    async def process_message(self, message: Optional[str] = None, thread_id: str = "default", decisions: Optional[List[Any]] = None) -> Dict[str, Any]:
+    async def process_message(
+        self, 
+        message: Optional[str] = None, 
+        thread_id: str = "default",
+        user_id: Optional[str] = None,
+        decisions: Optional[List[Any]] = None
+    ) -> Dict[str, Any]:
         """
         Procesa un mensaje con el agente o reanuda si hay decisiones de HITL.
         
         Args:
             message: Consulta o comando del usuario (Opcional si es reanudación)
             thread_id: ID del hilo de conversación para mantener contexto
+            user_id: ID del usuario
             decisions: Decisiones de supervisión humana (HITL)
             
         Returns:
@@ -126,7 +133,7 @@ class LanggraphAgentAdapter(AgentPort):
         
         config = {"configurable": {
             "thread_id": thread_id,
-            "user_id": "itsorivera"
+            "user_id": user_id or "system"
             }}
 
         # Logic to determine input (new message vs HITL resumption)

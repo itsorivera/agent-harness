@@ -27,6 +27,7 @@ async def query_general_agent(
         response = await agent.process_message(
             message=request.question, 
             thread_id=request.thread_id,
+            user_id=request.user_id,
             decisions=request.decisions
         )
         return {
@@ -52,6 +53,7 @@ async def query_financial_advisor_agent(
         response = await agent.process_message(
             message=request.question, 
             thread_id=request.thread_id,
+            user_id=request.user_id,
             decisions=request.decisions
         )
         return {
