@@ -1,32 +1,30 @@
 from typing import Optional, Dict
 from functools import lru_cache
-from fastapi import Depends
 import os
 from redis.asyncio import Redis
 from redisvl.index import AsyncSearchIndex
 from redisvl.schema.schema import IndexSchema
 
-from src.adapter.repository.memory_persistence.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync
-from src.adapter.repository.llm_provider.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
-from src.adapter.repository.llm_provider.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
-from src.adapter.repository.agent.LanggraphAgentAdapter import LanggraphAgentAdapter
-from src.adapter.repository.memory_persistence.LTM.RedisLTMRepositoryAdapter import RedisLTMRepositoryAdapter
-from src.adapter.repository.embedder_provider.AWSBedrockEmbeddingAdapter import AWSBedrockEmbeddingAdapter
-from src.core.ports.mcp_client_port import MCPClientPort
-from src.core.ports.checkpointer_port import CheckpointerPort
-from src.core.ports.llm_provider_port import LLMProviderPort
 from src.core.ports.agent_port import AgentPort
-from src.core.ports.ltm_repository_port import LTMRepositoryPort
+from src.core.ports.llm_provider_port import LLMProviderPort
+from src.core.ports.checkpointer_port import CheckpointerPort
 from src.core.ports.embedder_provider_port import EmbeddingProviderPort
+from src.core.ports.ltm_repository_port import LTMRepositoryPort
+from src.core.ports.mcp_client_port import MCPClientPort
 from src.core.prompts import GENERAL_AGENT_PROMPT, FINANCIAL_ADVISOR_SYSTEM_PROMPT
 from src.core.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
 from src.core.tools import FINANCIAL_ADVISOR_TOOLS
 from src.core.local_tools import get_memory_tools
+from src.adapter.repository.agent.LanggraphAgentAdapter import LanggraphAgentAdapter
+from src.adapter.repository.llm_provider.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
+from src.adapter.repository.llm_provider.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
+from src.adapter.repository.memory_persistence.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync
+from src.adapter.repository.embedder_provider.AWSBedrockEmbeddingAdapter import AWSBedrockEmbeddingAdapter
+from src.adapter.repository.memory_persistence.LTM.RedisLTMRepositoryAdapter import RedisLTMRepositoryAdapter
 from src.config.app_config import config
 from src.config.agent_personalities import GENERAL_AGENT_PERSONALITY
-from src.utils.logger import get_logger, set_correlation_id
+from src.utils.logger import get_logger
 from src.utils.ConfigResolver import resolve_model_id, resolve_llm_provider
-from datetime import datetime
 
 logger = get_logger(__name__)
 
