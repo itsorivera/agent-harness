@@ -140,7 +140,7 @@ class NodeFunctions:
             "messages_tools": [last_msg] + artificial_tool_messages
         }
 
-    async def tool_node(self, state: AgentState):
+    async def tool_node(self, state: AgentState, config: RunnableConfig):
         outputs = []
         for tool_call in state["messages_tools"][-1].tool_calls:
             tool_name = tool_call["name"]
@@ -156,7 +156,7 @@ class NodeFunctions:
                     outputs.append(ToolMessage(content=error_msg, name=tool_name, tool_call_id=tool_id, status="error"))
                     continue
 
-                tool_result = await self.tools_by_name[tool_name].ainvoke(tool_call["args"])
+                tool_result = await self.tools_by_name[tool_name].ainvoke(tool_call["args"], config=config)
                 outputs.append(
                     ToolMessage(
                         content=json.dumps(tool_result),
