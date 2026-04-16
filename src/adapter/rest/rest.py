@@ -1,10 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated
 from src.config.AgentDependenciesContainter import get_agent_general, get_financial_advisor_agent
 from src.core.ports.agent_port import AgentPort
-import uuid
 from src.utils.logger import get_logger, set_context_vars, get_correlation_id
-import traceback
 from .schemas import QueryRequest
 
 logger = get_logger(__name__)
@@ -35,8 +33,11 @@ async def query_general_agent(
             "correlation_id": get_correlation_id()
         }
     except Exception as e:
-        traceback.print_exc()
-        return {"error": str(e)}
+        logger.error(f"Error processing general agent query: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing request: {str(e)}"
+        )
     
 @router.post(
         path="/financial-advisor/query",
@@ -61,5 +62,8 @@ async def query_financial_advisor_agent(
             "correlation_id": get_correlation_id()
         }
     except Exception as e:
-        traceback.print_exc()
-        return {"error": str(e)}
+        logger.error(f"Error processing financial advisor query: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing request: {str(e)}"
+        )
