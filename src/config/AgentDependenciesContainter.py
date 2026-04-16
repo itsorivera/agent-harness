@@ -12,10 +12,10 @@ from src.core.ports.embedder_provider_port import EmbeddingProviderPort
 from src.core.ports.ltm_repository_port import LTMRepositoryPort
 from src.core.ports.mcp_client_port import MCPClientPort
 from src.core.prompts import GENERAL_AGENT_PROMPT, FINANCIAL_ADVISOR_SYSTEM_PROMPT
-from src.core.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
 from src.core.tools import FINANCIAL_ADVISOR_TOOLS
 from src.core.local_tools import get_memory_tools
-from src.adapter.repository.agent.LanggraphAgentAdapter import LanggraphAgentAdapter
+from src.adapter.agent.langgraph.LanggraphAgentAdapter import LanggraphAgentAdapter
+from src.adapter.agent.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
 from src.adapter.repository.llm_provider.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
 from src.adapter.repository.llm_provider.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
 from src.adapter.repository.memory_persistence.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync

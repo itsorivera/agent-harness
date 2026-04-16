@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, START, END
-from src.core.langgraph.states import AgentState
-from src.core.ports.graph_strategy_port import GraphStrategyPort
+from ..states import AgentState
+from ..graph_strategy_port import GraphStrategyPort
 
 class ReActGraphStrategy(GraphStrategyPort):
 
