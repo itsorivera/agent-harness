@@ -7,7 +7,7 @@ siguiendo el patrón de arquitectura hexagonal.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 
 class AgentPort(ABC):
@@ -34,13 +34,21 @@ class AgentPort(ABC):
         pass
 
     @abstractmethod
-    async def process_message(self, message: str, thread_id: str) -> Dict[str, Any]:
+    async def process_message(
+        self, 
+        message: Optional[str] = None, 
+        thread_id: str = "default",
+        user_id: Optional[str] = None,
+        decisions: Optional[List[Any]] = None
+    ) -> Dict[str, Any]:
         """
         Procesa un mensaje utilizando el agente.
         
         Args:
             message: El mensaje de entrada a procesar
             thread_id: Identificador único del hilo de conversación
+            user_id: Identificador del usuario (opcional)
+            decisions: Decisiones de supervisión humana (HITL) (opcional)
             
         Returns:
             Dict[str, Any]: Resultado del procesamiento incluyendo mensajes generados
