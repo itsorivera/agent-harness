@@ -1,7 +1,7 @@
 from typing import Dict, Optional, List
 from langchain_core.tools import tool, BaseTool
 from langchain_core.runnables.config import RunnableConfig
-from src.core.ports.ltm_repository_port import LTMRepositoryPort, MemoryEntity, MemoryType
+from src.core.ports.long_term_memory_port import LongTermMemoryPort, MemoryEntity, MemoryType
 from src.core.ports.embedder_provider_port import EmbeddingProviderPort
 from src.utils.logger import get_logger
 
@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 SYSTEM_USER_ID = "system"
 
-def get_memory_tools(ltm_repo: LTMRepositoryPort, embedder: EmbeddingProviderPort) -> List[BaseTool]:
+def get_memory_tools(ltm_port: LongTermMemoryPort, embedder: EmbeddingProviderPort) -> List[BaseTool]:
     """
     Factory that returns tools with injected LTM repository and embedding provider.
     This pattern breaks circular dependencies between the DI container and the tools.
@@ -37,7 +37,7 @@ def get_memory_tools(ltm_repo: LTMRepositoryPort, embedder: EmbeddingProviderPor
             embedding = embedder.embed_query(content)
             
             # 2. Verificar duplicados
-            is_duplicate = await ltm_repo.check_duplicate(
+            is_duplicate = await ltm_port.check_duplicate(
                 embedding=embedding,
                 user_id=user_id,
                 distance_threshold=0.05
@@ -55,7 +55,7 @@ def get_memory_tools(ltm_repo: LTMRepositoryPort, embedder: EmbeddingProviderPor
                 thread_id=thread_id
             )
             
-            success = await ltm_repo.store_memory(memory, embedding)
+            success = await ltm_port.store_memory(memory, embedding)
             return f"Successfully stored {memory_type.value} memory: {content}" if success else "Failed to store memory."
                 
         except Exception as e:
@@ -86,7 +86,7 @@ def get_memory_tools(ltm_repo: LTMRepositoryPort, embedder: EmbeddingProviderPor
             # 2. Recuperar del repositorio
             m_type = memory_type[0] if memory_type and len(memory_type) > 0 else None
             
-            stored_memories = await ltm_repo.retrieve_memories(
+            stored_memories = await ltm_port.retrieve_memories(
                 query_embedding=query_embedding,
                 user_id=user_id,
                 memory_type=m_type,

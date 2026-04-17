@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 from langchain_core.tools import BaseTool
 from src.core.ports.agent_port import AgentPort
-from src.core.ports.checkpointer_port import CheckpointerPortSync, CheckpointerPort
+from src.core.ports.short_term_memory_port import ShortTermMemoryPortSync, ShortTermMemoryPort
 from src.core.ports.llm_provider_port import LLMProviderPort
 from .nodes import NodeFunctions
 from .states import AgentState
@@ -17,7 +17,7 @@ class LanggraphAgentAdapter(AgentPort):
             llm_port: LLMProviderPort,
             model_id: str,
             system_prompt: str,
-            checkpointer_port: CheckpointerPort | CheckpointerPortSync,
+            checkpointer_port: ShortTermMemoryPort | ShortTermMemoryPortSync,
             tools: List[BaseTool],
             graph_strategy: Optional[GraphStrategyPort] = None,
             hitl_config: Optional[Dict[str, Any]] = None,
@@ -97,8 +97,8 @@ class LanggraphAgentAdapter(AgentPort):
             node_functions=node_functions,
         )
         
-        self.logger.info("Compilando grafo con checkpointer...")
-        checkpointer = await self.checkpointer_port.get_checkpointer()
+        self.logger.info("Compilando grafo con memoria a corto plazo...")
+        checkpointer = await self.checkpointer_port.get_state_manager()
         self.agent_graph_compiled = agent_graph.compile(checkpointer=checkpointer)
         
         self.logger.info(f"Agente {self.agent_name} creado exitosamente")
@@ -160,18 +160,14 @@ class LanggraphAgentAdapter(AgentPort):
     async def cleanup(self) -> None:
         """
         Limpia los recursos del agente.
-        
-        Libera:
-        - Conexión del checkpointer
-        - Recursos del LLM provider
         """
         self.logger.info(f"Limpiando recursos del agente {self.agent_name}...")
         
         try:
             await self.checkpointer_port.cleanup()
-            self.logger.info("Checkpointer limpiado")
+            self.logger.info("Memoria STM limpiada")
         except Exception as e:
-            self.logger.error(f"Error al limpiar checkpointer: {e}")
+            self.logger.error(f"Error al limpiar memoria STM: {e}")
         
         try:
             self.llm_port.cleanup()

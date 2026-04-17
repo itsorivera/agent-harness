@@ -64,7 +64,7 @@ class AgentPort(ABC):
         Limpia los recursos utilizados por el agente.
         
         Debe liberar:
-        - Conexiones a bases de datos (checkpointer)
+        - Conexiones a bases de datos (STM memory)
         - Recursos del proveedor de LLM
         - Clientes MCP u otros servicios externos
         """

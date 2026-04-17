@@ -7,9 +7,9 @@ from redisvl.schema.schema import IndexSchema
 
 from src.core.ports.agent_port import AgentPort
 from src.core.ports.llm_provider_port import LLMProviderPort
-from src.core.ports.checkpointer_port import CheckpointerPort
+from src.core.ports.short_term_memory_port import ShortTermMemoryPort
 from src.core.ports.embedder_provider_port import EmbeddingProviderPort
-from src.core.ports.ltm_repository_port import LTMRepositoryPort
+from src.core.ports.long_term_memory_port import LongTermMemoryPort
 from src.core.ports.mcp_client_port import MCPClientPort
 from src.core.prompts import GENERAL_AGENT_PROMPT, FINANCIAL_ADVISOR_SYSTEM_PROMPT
 from src.core.tools import FINANCIAL_ADVISOR_TOOLS
@@ -18,8 +18,8 @@ from src.adapter.agent.langgraph.LanggraphAgentAdapter import LanggraphAgentAdap
 from src.adapter.agent.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
 from src.adapter.providers.llm.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
 from src.adapter.providers.llm.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
-from src.adapter.memory_persistence.STM.PostgresCheckpointerAdapter import PostgresCheckpointerAdapterAsync
-from src.adapter.memory_persistence.LTM.RedisLTMRepositoryAdapter import RedisLTMRepositoryAdapter
+from src.adapter.memory_persistence.STM.postgres_short_term_memory_adapter import PostgresShortTermMemoryAdapter
+from src.adapter.memory_persistence.LTM.redis_long_term_memory_adapter import RedisLongTermMemoryAdapter
 from src.adapter.providers.embedder.AWSBedrockEmbeddingAdapter import AWSBedrockEmbeddingAdapter
 from src.config.app_config import config
 from src.config.agent_personalities import GENERAL_AGENT_PERSONALITY
@@ -31,24 +31,24 @@ logger = get_logger(__name__)
 class AgentDependencies:
     
     def __init__(self):
-        self._checkpointer: Optional[CheckpointerPort] = None
+        self._stm_port: Optional[ShortTermMemoryPort] = None
         self._llm_providers_cache: Dict[str, LLMProviderPort] = {}
         self._channel_mcp_client: Optional[MCPClientPort] = None
         self._block_card_mcp_client: Optional[MCPClientPort] = None
         self._security_mcp_client: Optional[MCPClientPort] = None
         self._general_agent: Optional[AgentPort] = None
-        self._ltm_repository: Optional[LTMRepositoryPort] = None
+        self._ltm_port: Optional[LongTermMemoryPort] = None
         self._redis_client: Optional[Redis] = None
         self._redis_index: Optional[AsyncSearchIndex] = None
         self._embedding_provider: Optional[EmbeddingProviderPort] = None
     
     @property
-    def checkpointer(self) -> CheckpointerPort:
-        """Lazy loading del checkpointer"""
-        if self._checkpointer is None:
-            logger.info("Inicializando PostgresCheckpointerAdapter")
-            self._checkpointer = PostgresCheckpointerAdapterAsync()
-        return self._checkpointer
+    def stm_port(self) -> ShortTermMemoryPort:
+        """Lazy loading of ShortTermMemoryPort"""
+        if self._stm_port is None:
+            logger.info("Initializing PostgresShortTermMemoryAdapter")
+            self._stm_port = PostgresShortTermMemoryAdapter()
+        return self._stm_port
     
     @property
     def redis_client(self) -> Redis:
@@ -79,13 +79,13 @@ class AgentDependencies:
                 
         return self._redis_index
 
-    async def get_ltm_repository(self) -> LTMRepositoryPort:
-        """Lazy loading of LTM Repository adapter"""
-        if self._ltm_repository is None:
+    async def get_ltm_port(self) -> LongTermMemoryPort:
+        """Lazy loading of LTM Port adapter"""
+        if self._ltm_port is None:
             index = await self.get_ltm_index()
-            logger.info("Initializing RedisLTMRepositoryAdapter")
-            self._ltm_repository = RedisLTMRepositoryAdapter(index=index)
-        return self._ltm_repository
+            logger.info("Initializing RedisLongTermMemoryAdapter")
+            self._ltm_port = RedisLongTermMemoryAdapter(index=index)
+        return self._ltm_port
     
     @property
     def embedding_provider(self) -> EmbeddingProviderPort:
@@ -135,12 +135,12 @@ class AgentDependencies:
             logger.info("Initializing general agent...")
             
             llm_provider = self.get_llm_provider()
-            checkpointer = self.checkpointer
-            ltm_repo = await self.get_ltm_repository()
+            stm_port = self.stm_port
+            ltm_port = await self.get_ltm_port()
             embedder = self.embedding_provider
             
             # Use factory to break circular dependency
-            memory_tools = get_memory_tools(ltm_repo, embedder)
+            memory_tools = get_memory_tools(ltm_port, embedder)
             
             graph_strategy = ReActGraphStrategy()
             
@@ -151,7 +151,7 @@ class AgentDependencies:
                 system_prompt=GENERAL_AGENT_PROMPT.render(
                     **GENERAL_AGENT_PERSONALITY.model_dump()
                 ),
-                checkpointer_port=checkpointer,
+                checkpointer_port=stm_port,
                 tools=memory_tools,
                 graph_strategy=graph_strategy,
             )
@@ -168,12 +168,12 @@ class AgentDependencies:
         logger.info("Initializing financial advisor agent...")
         
         llm_provider = self.get_llm_provider()
-        checkpointer = self.checkpointer
-        ltm_repo = await self.get_ltm_repository()
+        stm_port = self.stm_port
+        ltm_port = await self.get_ltm_port()
         embedder = self.embedding_provider
         
         # Tools: Combine specific tools with memory tools
-        memory_tools = get_memory_tools(ltm_repo, embedder)
+        memory_tools = get_memory_tools(ltm_port, embedder)
         all_tools = FINANCIAL_ADVISOR_TOOLS + memory_tools
         
         graph_strategy = ReActGraphStrategy()
@@ -184,7 +184,7 @@ class AgentDependencies:
             # "transfer_funds": {"allowed_decisions": ["approve", "reject"]},
             # "delete_record": {"allowed_decisions": ["approve"]} # Only approve or nothing
         }
-
+ 
         agent_adapter = LanggraphAgentAdapter(
             agent_name="FinancialAdvisorAgent",
             llm_port=llm_provider,
@@ -192,12 +192,12 @@ class AgentDependencies:
             system_prompt=FINANCIAL_ADVISOR_SYSTEM_PROMPT.render(
                 **GENERAL_AGENT_PERSONALITY.model_dump()
             ),
-            checkpointer_port=checkpointer,
+            checkpointer_port=stm_port,
             tools=all_tools,
             graph_strategy=graph_strategy,
             hitl_config=hitl_config
         )
-
+ 
         
         await agent_adapter.create_agent()
         return agent_adapter
