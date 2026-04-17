@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated
-from src.config.AgentDependenciesContainter import get_agent_general, get_financial_advisor_agent
+from src.config.agent_dependencies_container import get_agent_general, get_financial_advisor_agent
 from src.core.ports.agent_port import AgentPort
 from src.utils.logger import get_logger, set_context_vars, get_correlation_id
 from .schemas import QueryRequest

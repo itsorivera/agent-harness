@@ -1,4 +1,4 @@
-from src.config.AgentDependenciesContainter import get_agent_general
+from src.config.agent_dependencies_container import get_agent_general
 
 async def get_agent():
     """Factory function for LangGraph CLI to load the graph."""
