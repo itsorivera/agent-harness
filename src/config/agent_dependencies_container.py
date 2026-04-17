@@ -14,17 +14,17 @@ from src.core.ports.mcp_client_port import MCPClientPort
 from src.core.prompts import GENERAL_AGENT_PROMPT, FINANCIAL_ADVISOR_SYSTEM_PROMPT
 from src.core.tools import FINANCIAL_ADVISOR_TOOLS
 from src.core.local_tools import get_memory_tools
-from src.adapter.agent.langgraph.LanggraphAgentAdapter import LanggraphAgentAdapter
-from src.adapter.agent.langgraph.graph_strategies.ReActGraphStrategy import ReActGraphStrategy
-from src.adapter.providers.llm.AWSBedrockLLMProviderAdapter import AWSLLMProviderAdapter
-from src.adapter.providers.llm.IAFoundryProviderLLMAdapter import IAFoundryLLMAdapter
+from src.adapter.agent.langgraph.langgraph_agent_adapter import LanggraphAgentAdapter
+from src.adapter.agent.langgraph.graph_strategies.react_graph_strategy import ReActGraphStrategy
+from src.adapter.providers.llm.aws_bedrock_llm_provider_adapter import AWSLLMProviderAdapter
+from src.adapter.providers.llm.ia_foundry_provider_llm_adapter import IAFoundryLLMAdapter
 from src.adapter.memory_persistence.STM.postgres_short_term_memory_adapter import PostgresShortTermMemoryAdapter
 from src.adapter.memory_persistence.LTM.redis_long_term_memory_adapter import RedisLongTermMemoryAdapter
-from src.adapter.providers.embedder.AWSBedrockEmbeddingAdapter import AWSBedrockEmbeddingAdapter
+from src.adapter.providers.embedder.aws_bedrock_embedding_adapter import AWSBedrockEmbeddingAdapter
 from src.config.app_config import config
 from src.config.agent_personalities import GENERAL_AGENT_PERSONALITY
 from src.utils.logger import get_logger
-from src.utils.ConfigResolver import resolve_model_id, resolve_llm_provider
+from src.utils.config_resolver import resolve_model_id, resolve_llm_provider
 
 logger = get_logger(__name__)
 
