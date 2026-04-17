@@ -208,3 +208,5 @@ __marimo__/
 
 # LangGraph API
 .langgraph_api/
+
+.*
