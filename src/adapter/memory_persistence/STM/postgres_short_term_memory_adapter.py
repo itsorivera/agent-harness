@@ -1,33 +1,28 @@
 """
-Adaptador de checkpoint para PostgreSQL (LangGraph)
+Adaptador de memoria a corto plazo usando PostgreSQL (LangGraph)
 """
 import os
-from contextlib import asynccontextmanager
-from typing import Any, AsyncContextManager
+from typing import Any
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg_pool import AsyncConnectionPool
 import psycopg
 
-from langgraph.checkpoint.postgres import PostgresSaver
-
 from src.config.app_config import config
-from src.core.ports.checkpointer_port import CheckpointerPort, CheckpointerPortSync
+from src.core.ports.short_term_memory_port import ShortTermMemoryPort, ShortTermMemoryPortSync
 from src.utils.logger import get_logger
 
-class PostgresCheckpointerAdapterAsync(CheckpointerPort):
-    """Implementación de checkpoint usando PostgreSQL con LangGraph"""
+class PostgresShortTermMemoryAdapter(ShortTermMemoryPort):
+    """Implementación de STM usando PostgreSQL con LangGraph"""
     
     def __init__(self):
-        self.logger = get_logger(f"{__name__}.PostgresCheckpointerAdapter")
+        self.logger = get_logger(f"{__name__}.PostgresShortTermMemoryAdapter")
         self._pool = None
         self._checkpointer = None
         
-    async def get_checkpointer(self) -> Any:
+    async def get_state_manager(self) -> Any:
         """
-        Crea un checkpointer de PostgreSQL
-        
-        Returns:
-            AsyncPostgresSaver configurado
+        Crea un gestor de estado (checkpointer) de PostgreSQL
         """
         if self._checkpointer is not None:
             return self._checkpointer
@@ -38,7 +33,7 @@ class PostgresCheckpointerAdapterAsync(CheckpointerPort):
         }
         
         postgres_uri = self._build_postgres_uri()
-        self.logger.info(f"Conectando a PostgreSQL checkpoint")
+        self.logger.info(f"Conectando a PostgreSQL para STM")
         
         self._pool = AsyncConnectionPool(postgres_uri, kwargs=connection_kwargs, open=False)
         await self._pool.open()
@@ -69,19 +64,16 @@ class PostgresCheckpointerAdapterAsync(CheckpointerPort):
             self._pool = None
             self._checkpointer = None
 
-class PostgresCheckpointerAdapterSync(CheckpointerPortSync):
-    """Implementación de checkpoint usando PostgreSQL con LangGraph (sincronía)"""
+class PostgresShortTermMemoryAdapterSync(ShortTermMemoryPortSync):
+    """Implementación de STM usando PostgreSQL (Sincrónico)"""
 
     def __init__(self):
-        self.logger = get_logger(f"{__name__}.PostgresCheckpointerAdapterSync")
+        self.logger = get_logger(f"{__name__}.PostgresShortTermMemoryAdapterSync")
         self._conn = None
 
-    def get_checkpointer(self):
+    def get_state_manager(self) -> Any:
         """
-        Crea un checkpointer de PostgreSQL
-
-        Returns:
-            PostgresSaver configurado
+        Crea un gestor de estado de PostgreSQL
         """
         connection_kwargs = {
             "autocommit": True,
@@ -89,19 +81,15 @@ class PostgresCheckpointerAdapterSync(CheckpointerPortSync):
         }
 
         postgres_uri = self._build_postgres_uri()
-        self.logger.info(f"Conectando a PostgreSQL checkpoint")
+        self.logger.info(f"Conectando a PostgreSQL para STM (Sync)")
 
-        # Mantener la conexión abierta para uso persistente
         self._conn = psycopg.connect(postgres_uri, **connection_kwargs)
         checkpointer = PostgresSaver(self._conn)
-        
-        # Crear las tablas si no existen
         checkpointer.setup()
         
         return checkpointer
 
     def _build_postgres_uri(self) -> str:
-        """Construye la URI de conexión a PostgreSQL"""
         if config.POSTGRES_CONNECTION_STRING:
             return config.POSTGRES_CONNECTION_STRING
             
@@ -115,6 +103,5 @@ class PostgresCheckpointerAdapterSync(CheckpointerPortSync):
         )
 
     def cleanup(self) -> None:
-        """Limpia recursos de PostgreSQL"""
         if self._conn:
             self._conn.close()

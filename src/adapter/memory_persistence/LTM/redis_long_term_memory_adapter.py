@@ -8,22 +8,17 @@ from redisvl.index import AsyncSearchIndex
 from redisvl.query import VectorRangeQuery, VectorQuery
 from redisvl.query.filter import Tag
 
-from src.core.ports.ltm_repository_port import LTMRepositoryPort, MemoryEntity, MemoryType
+from src.core.ports.long_term_memory_port import LongTermMemoryPort, MemoryEntity, MemoryType
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-class RedisLTMRepositoryAdapter(LTMRepositoryPort):
+class RedisLongTermMemoryAdapter(LongTermMemoryPort):
     """
-    Adapter that implements the LTMRepositoryPort using RedisVL.
-    SOLID: Single Responsibility and Open/Closed (can add more methods without modifying clients).
+    Adapter that implements the LongTermMemoryPort using RedisVL.
     """
 
     def __init__(self, index: AsyncSearchIndex):
-        """
-        The adapter is initialized with an active search index.
-        The search index already has the Redis client connection.
-        """
         self._index = index
 
     async def store_memory(self, memory: MemoryEntity, embedding: List[float]) -> bool:
@@ -45,7 +40,7 @@ class RedisLTMRepositoryAdapter(LTMRepositoryPort):
         }
 
         try:
-            # We use load to insert into the existing index
+            # Use load to insert into the existing index
             await self._index.load([memory_data])
             logger.info(f"Memory stored correctly with ID: {memory_data['memory_id']}")
             return True
@@ -120,14 +115,8 @@ class RedisLTMRepositoryAdapter(LTMRepositoryPort):
         return len(results) > 0
 
     async def delete_memory(self, memory_id: str) -> bool:
-        """
-        Deletes a specific memory entry.
-        Note: requires the exact prefix formatted key or a custom implementation with the ID tag.
-        On RedisVL we can search by memory_id tag first!
-        """
-        # Search by tag memory_id first to get the actual Redis Key
         query = VectorQuery(
-            vector=[0] * 1536, # Dummy vector for tag-only search if needed, better use FT.SEARCH
+            vector=[0] * 1536, 
             filter_expression=(Tag("memory_id") == memory_id),
             num_results=1,
             return_fields=["id"]
@@ -136,8 +125,6 @@ class RedisLTMRepositoryAdapter(LTMRepositoryPort):
         try:
             results = await self._index.query(query)
             if results:
-                # Use redis client directly to delete the key
-                # self._index._redis is the internal client
                 await self._index._redis.delete(results[0]["id"])
                 return True
             return False

@@ -36,7 +36,7 @@ class MemoryEntity:
             "thread_id": self.thread_id
         }
 
-class LTMRepositoryPort(ABC):
+class LongTermMemoryPort(ABC):
     """
     Port (Interface) for Long Term Memory Persistence.
     Following SOLID: Interface Segregation and Dependency Inversion.
