@@ -196,26 +196,42 @@ class LanggraphAgentAdapter(AgentPort):
         ):
             if hasattr(chunk, "content") and chunk.content:
                 content = chunk.content
+                text_to_send = ""
                 
                 # Caso 1: Es una lista (común en modelos de Bedrock)
                 if isinstance(content, list):
                     for block in content:
                         if isinstance(block, dict):
-                            # Extraemos texto de bloques tipo dict {'type': 'text', 'text': '...'}
                             text = block.get("text", "")
-                            if text: 
-                                yield f"data: {text}\n\n"
+                            if text: text_to_send += str(text)
                         elif isinstance(block, str):
-                            yield f"data: {block}\n\n"
+                            text_to_send += block
                 
                 # Caso 2: Es un string directo (Tokens normales)
                 elif isinstance(content, str):
-                    yield f"data: {content}\n\n"
+                    text_to_send = content
                 
                 # Caso 3: Fallback para cualquier otro tipo de contenido
                 else:
                     if content is not None:
-                        yield f"data: {str(content)}\n\n"
+                        text_to_send = str(content)
+
+                if text_to_send:
+                    # JSON Enveloping
+                    payload = {
+                        "choices": [{
+                            "delta": {
+                                "content": text_to_send,
+                                "role": "assistant"
+                            },
+                            "index": 0
+                        }],
+                        "object": "chat.completion.chunk"
+                    }
+                    yield f"data: {json.dumps(payload)}\n\n"
+
+        # Final marker
+        yield "data: [DONE]\n\n"
 
     
     async def cleanup(self) -> None:
