@@ -49,14 +49,13 @@ Clients can toggle streaming by setting the `stream` flag in the JSON body:
 
 ### Response Format
 
-The server will respond with chunks following the SSE standard:
+The server follows the industry standard (OpenAI-compatible) SSE format:
 
 ```text
-data: The
-data:  current
-data:  market
-data:  trend
+data: {"choices": [{"delta": {"content": "The", "role": "assistant"}, "index": 0}], "object": "chat.completion.chunk"}
+data: {"choices": [{"delta": {"content": " current", "role": "assistant"}, "index": 0}], "object": "chat.completion.chunk"}
 ...
+data: [DONE]
 ```
 
 ## Why SSE?
