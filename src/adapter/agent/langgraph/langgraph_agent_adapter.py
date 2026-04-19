@@ -194,11 +194,28 @@ class LanggraphAgentAdapter(AgentPort):
             config, 
             stream_mode="messages"
         ):
-            # Filtramos para enviar solo contenido de texto si es un AIMessageChunk
             if hasattr(chunk, "content") and chunk.content:
-                # El formato SSE (Server-Sent Events) requiere 'data: <payload>\n\n'
-                # Aquí enviamos solo el contenido para que el consumidor lo maneje
-                yield chunk.content
+                content = chunk.content
+                
+                # Caso 1: Es una lista (común en modelos de Bedrock)
+                if isinstance(content, list):
+                    for block in content:
+                        if isinstance(block, dict):
+                            # Extraemos texto de bloques tipo dict {'type': 'text', 'text': '...'}
+                            text = block.get("text", "")
+                            if text: 
+                                yield f"data: {text}\n\n"
+                        elif isinstance(block, str):
+                            yield f"data: {block}\n\n"
+                
+                # Caso 2: Es un string directo (Tokens normales)
+                elif isinstance(content, str):
+                    yield f"data: {content}\n\n"
+                
+                # Caso 3: Fallback para cualquier otro tipo de contenido
+                else:
+                    if content is not None:
+                        yield f"data: {str(content)}\n\n"
 
     
     async def cleanup(self) -> None:
