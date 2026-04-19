@@ -13,4 +13,5 @@ class QueryRequest(BaseModel):
     thread_id: str
     user_id: str
     decisions: Optional[List[Decision]] = None
+    stream: bool = False
 

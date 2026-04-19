@@ -42,7 +42,7 @@ class AgentPort(ABC):
         decisions: Optional[List[Any]] = None
     ) -> Dict[str, Any]:
         """
-        Procesa un mensaje utilizando el agente.
+        Procesa un mensaje utilizando el agente de forma síncrona (one-shot).
         
         Args:
             message: El mensaje de entrada a procesar
@@ -52,6 +52,31 @@ class AgentPort(ABC):
             
         Returns:
             Dict[str, Any]: Resultado del procesamiento incluyendo mensajes generados
+            
+        Raises:
+            RuntimeError: Si el agente no ha sido inicializado
+        """
+        pass
+
+    @abstractmethod
+    async def stream_message(
+        self, 
+        message: Optional[str] = None, 
+        thread_id: str = "default",
+        user_id: Optional[str] = None,
+        decisions: Optional[List[Any]] = None
+    ) -> Any:
+        """
+        Procesa un mensaje utilizando el agente en modo streaming.
+        
+        Args:
+            message: El mensaje de entrada a procesar
+            thread_id: Identificador único del hilo de conversación
+            user_id: Identificador del usuario (opcional)
+            decisions: Decisiones de supervisión humana (HITL) (opcional)
+            
+        Returns:
+            AsyncIterator: Generador asíncrono de eventos/tokens
             
         Raises:
             RuntimeError: Si el agente no ha sido inicializado

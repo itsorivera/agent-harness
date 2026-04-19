@@ -156,6 +156,50 @@ class LanggraphAgentAdapter(AgentPort):
 
         return result
 
+    @track_latency("agent_stream_message")
+    async def stream_message(
+        self, 
+        message: Optional[str] = None, 
+        thread_id: str = "default",
+        user_id: Optional[str] = None,
+        decisions: Optional[List[Any]] = None
+    ):
+        """
+        Procesa un mensaje en modo streaming utilizando astream de LangGraph.
+        Yields chunks de la respuesta a medida que se generan.
+        """
+        from langgraph.types import Command
+        import json
+
+        if not self.agent_graph_compiled:
+            raise RuntimeError("El agente no ha sido inicializado. Llama a create_agent() primero.")
+        
+        self.logger.info(f"Petición STREAM para agente {self.agent_name} en thread {thread_id}")
+        
+        config = {"configurable": {
+            "thread_id": thread_id,
+            "user_id": user_id or "system"
+            }}
+
+        if decisions:
+            decisions_data = [d.model_dump() if hasattr(d, "model_dump") else d for d in decisions]
+            input_data = Command(resume={"decisions": decisions_data})
+        else:
+            input_data = {"messages_tools": message}
+
+        # Utilizamos astream con stream_mode="messages" para obtener tokens individuales
+        # de los mensajes que se van generando en el grafo.
+        async for chunk, metadata in self.agent_graph_compiled.astream(
+            input_data, 
+            config, 
+            stream_mode="messages"
+        ):
+            # Filtramos para enviar solo contenido de texto si es un AIMessageChunk
+            if hasattr(chunk, "content") and chunk.content:
+                # El formato SSE (Server-Sent Events) requiere 'data: <payload>\n\n'
+                # Aquí enviamos solo el contenido para que el consumidor lo maneje
+                yield chunk.content
+
     
     async def cleanup(self) -> None:
         """

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Annotated
 from src.config.agent_dependencies_container import get_agent_general, get_financial_advisor_agent
 from src.core.ports.agent_port import AgentPort
@@ -20,8 +21,19 @@ async def query_general_agent(
     try:
         # Inject user_id into the logging context for better traceability
         set_context_vars(user_id=request.user_id)
-        logger.info("New query request", thread_id=request.thread_id)
+        logger.info("New query request", thread_id=request.thread_id, stream=request.stream)
         
+        if request.stream:
+            return StreamingResponse(
+                agent.stream_message(
+                    message=request.question, 
+                    thread_id=request.thread_id,
+                    user_id=request.user_id,
+                    decisions=request.decisions
+                ),
+                media_type="text/event-stream"
+            )
+
         response = await agent.process_message(
             message=request.question, 
             thread_id=request.thread_id,
@@ -49,8 +61,19 @@ async def query_financial_advisor_agent(
     try:
         # Inject user_id into the logging context for better traceability
         set_context_vars(user_id=request.user_id)
-        logger.info("New financial advisor query request", thread_id=request.thread_id)
+        logger.info("New financial advisor query request", thread_id=request.thread_id, stream=request.stream)
         
+        if request.stream:
+            return StreamingResponse(
+                agent.stream_message(
+                    message=request.question, 
+                    thread_id=request.thread_id,
+                    user_id=request.user_id,
+                    decisions=request.decisions
+                ),
+                media_type="text/event-stream"
+            )
+
         response = await agent.process_message(
             message=request.question, 
             thread_id=request.thread_id,
