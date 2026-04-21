@@ -187,8 +187,7 @@ class LanggraphAgentAdapter(AgentPort):
         else:
             input_data = {"messages_tools": message}
 
-        # Utilizamos astream con stream_mode="messages" para obtener tokens individuales
-        # de los mensajes que se van generando en el grafo.
+        # Use astream and messages to get tokens individually
         async for chunk, metadata in self.agent_graph_compiled.astream(
             input_data, 
             config, 
@@ -198,7 +197,7 @@ class LanggraphAgentAdapter(AgentPort):
                 content = chunk.content
                 text_to_send = ""
                 
-                # Caso 1: Es una lista (común en modelos de Bedrock)
+                # Case 1: List (common in Bedrock models)
                 if isinstance(content, list):
                     for block in content:
                         if isinstance(block, dict):
@@ -207,11 +206,11 @@ class LanggraphAgentAdapter(AgentPort):
                         elif isinstance(block, str):
                             text_to_send += block
                 
-                # Caso 2: Es un string directo (Tokens normales)
+                # Case 2: Direct string (Normal tokens)
                 elif isinstance(content, str):
                     text_to_send = content
                 
-                # Caso 3: Fallback para cualquier otro tipo de contenido
+                # Fallback for any other type of content
                 else:
                     if content is not None:
                         text_to_send = str(content)
