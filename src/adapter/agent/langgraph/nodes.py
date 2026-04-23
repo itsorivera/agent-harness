@@ -1,12 +1,39 @@
+from pydantic import BaseModel, Field
+from typing import Dict, Any, List, Optional, Union
+import json
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import SystemMessage, ToolMessage, HumanMessage, AIMessage
-from typing import Dict, Any, List
-import json
 from langgraph.types import interrupt
 from src.utils.logger import get_logger
 from .states import AgentState
 
 logger = get_logger("nodes.py")
+
+class ToolCallRequest(BaseModel):
+    """Esquema para peticiones de herramientas dentro de una respuesta estructurada."""
+    tool_name: str = Field(description="Nombre de la herramienta a invocar.")
+    tool_args: Dict[str, Any] = Field(description="Argumentos para la herramienta.")
+
+class XAIResponse(BaseModel):
+    """
+    Esquema de Explicabilidad para Agentes.
+    Fuerza al modelo a razonar antes de actuar.
+    """
+    reasoning: str = Field(
+        description="Razonamiento detallado (Chain of Thought) sobre por qué se toma esta decisión."
+    )
+    thought_process: List[str] = Field(
+        description="Pasos lógicos seguidos para llegar a la conclusión."
+    )
+    action_type: str = Field(
+        description="Tipo de acción: 'FINAL_ANSWER' o 'TOOL_CALL'."
+    )
+    text_content: Optional[str] = Field(
+        None, description="Respuesta directa al usuario si aplica."
+    )
+    tool_calls: Optional[List[ToolCallRequest]] = Field(
+        None, description="Lista de llamadas a herramientas si el action_type es 'TOOL_CALL'."
+    )
 
 class NodeFunctions:
     def __init__(self, models: Dict[str, Any], system_prompt: str, tools: List[Any] = None, hitl_config: Dict[str, Any] = None):
@@ -18,55 +45,66 @@ class NodeFunctions:
             tools: List of tools to bind to the LLM. If None, no tools will be bound.
             hitl_config: Configuration for human-in-the-loop interruption rules.
         """
-        self.conversation_llm = models.get("conversation_llm")
+        self.raw_llm = models.get("conversation_llm")
         self.system_prompt = system_prompt
         self.tools = tools or []
         self._hitl_config = hitl_config or {}
         
-        # Bind tools to the LLM if tools are provided. #TODO revisar logica para bindear tools
+        # Enfoque de Rigor: Usar el modelo con salida estructurada para XAI
+        self.conversation_llm = self.raw_llm.with_structured_output(XAIResponse)
+        
         if self.tools:
-            self.conversation_llm = self.conversation_llm.bind_tools(self.tools)
+            # Aunque usemos output estructurado, mantenemos referencia a herramientas
             self.tools_by_name = {tool.name: tool for tool in self.tools}
-            logger.info(f"Bound tools to conversation LLM: {[tool.name for tool in self.tools]}")
+            logger.info(f"Initialized nodes with XAI Structured Output and {len(self.tools)} tools.")
         else:
             self.tools_by_name = {}
-            logger.info("No tools bound to conversation LLM.")
 
     def call_model(self, state: AgentState, config: RunnableConfig):
         system_prompt = SystemMessage(content=self.system_prompt)
-        #system_prompt = SystemMessage(content=CREDIT_CARD_AGENT_PROMPT.render())
-        response = self.conversation_llm.invoke([system_prompt] + state["messages_tools"], config)
-        # Extrae solo el texto de la respuesta, ignorando posibles tool_use blocks
-        text_content = ""
-        if isinstance(response.content, str):
-            text_content = response.content
-        elif isinstance(response.content, list):
-            # Filtra y concatena solo los bloques de texto
-            text_content = " ".join([
-                block.get("text", "")
-                for block in response.content
-                if isinstance(block, dict) and block.get("type") == "text"
-            ])
-        # Log detail for better observability (sanitizing for Windows Terminal encoding issues)
-        if text_content:
-            safe_text = text_content.encode("ascii", "ignore").decode("ascii")
-            logger.info(f"Response last message (text): {safe_text}")
         
-        if response.tool_calls:
-            logger.info(f"Response tool calls: {[tc['name'] for tc in response.tool_calls]}")
+        # Invocación estructurada
+        logger.info("Invoking LLM with Structured XAI Output...")
+        structured_response: XAIResponse = self.conversation_llm.invoke(
+            [system_prompt] + state["messages_tools"], 
+            config
+        )
         
-        if not text_content and not response.tool_calls:
-            logger.warning("LLM Response was empty (no text and no tool calls found).")
-        return {"messages_tools": [response],
-                "messages": [
-                    HumanMessage(state["messages_tools"][-1].content),
-                    AIMessage(
-                        content=text_content,
-                        response_metadata=response.response_metadata,
-                        usage_metadata=response.usage_metadata, #TODO meter en una funcion el formato de salida
-                    ), 
-                ],
-            }
+        # Extraer la explicabilidad para el estado
+        explanation = {
+            "step": config.get("metadata", {}).get("langgraph_node", "call_model"),
+            "reasoning": structured_response.reasoning,
+            "logical_steps": structured_response.thought_process,
+            "action": structured_response.action_type
+        }
+        
+        # Mapear la salida estructurada de vuelta a un AIMessage compatible con LangGraph
+        # Esto asegura que nodes subsiguientes (como tool_node) sigan funcionando.
+        langchain_tool_calls = []
+        if structured_response.tool_calls:
+            for tc in structured_response.tool_calls:
+                langchain_tool_calls.append({
+                    "name": tc.tool_name,
+                    "args": tc.tool_args,
+                    "id": f"call_{tc.tool_name}_{config.get('configurable', {}).get('thread_id', '0')}" # Generación de ID simulada
+                })
+
+        ai_msg = AIMessage(
+            content=structured_response.text_content or "",
+            tool_calls=langchain_tool_calls,
+            response_metadata={"xai": explanation}
+        )
+
+        logger.info(f"XAI Reasoning: {structured_response.reasoning[:100]}...")
+        
+        return {
+            "messages_tools": [ai_msg],
+            "messages": [
+                # Historial limpio para el usuario final o cliente
+                AIMessage(content=structured_response.text_content or "Pensando...")
+            ],
+            "explanations": [explanation]
+        }
 
     async def hitl_gate(self, state: AgentState):
         """
