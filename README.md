@@ -53,7 +53,7 @@ The project addresses critical operational challenges in the AI application life
 
 ---
 
-## 🛠️ Tech Stack & Rationale
+## Tech Stack & Rationale
 
 | Component         | Selection          | Architectural Rationale                                                           |
 | :---------------- | :----------------- | :-------------------------------------------------------------------------------- |
