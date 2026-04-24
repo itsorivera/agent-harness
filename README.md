@@ -4,7 +4,7 @@
 
 **Agent Harness** is a robust solution designed to bridge the gap between Proof of Concepts (PoC) and production-grade agentic systems. This framework does not just orchestrate language models; it establishes a standard for **Governance, Explainability, and Architectural Rigor**, enabling the deployment of reliable autonomous agents in complex corporate environments.
 
-This project demonstrates the ability to design scalable, decoupled, and auditable systems that resolve the security, latency, and opacity challenges inherent in current agent architectures.
+This project as part of my portfolio showcases my ability to architect scalable, decoupled, and auditable systems that resolve the security, latency, and opacity challenges inherent in current agent architectures.
 
 ---
 
