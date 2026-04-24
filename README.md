@@ -57,7 +57,7 @@ The project addresses critical operational challenges in the AI application life
 
 | Component         | Selection          | Architectural Rationale                                                           |
 | :---------------- | :----------------- | :-------------------------------------------------------------------------------- |
-| **Orchestration** | LangGraph          | Superior capability for modeling cyclic state graphs and native persistence.      |
+| **AI Framework**  | LangGraph          | Superior capability for modeling cyclic state graphs and native persistence.      |
 | **Vector Engine** | RedisVL            | Ultra-low latency semantic indexing and search for dynamic RAG.                   |
 | **API Layer**     | FastAPI            | Exceptional asynchronous performance with self-documenting contracts via OpenAPI. |
 | **Storage**       | PostgreSQL         | ACID integrity and robustness for managing long-running states and sessions.      |
