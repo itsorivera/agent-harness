@@ -1,6 +1,6 @@
 # Agent Harness: Enterprise-Grade Agent Orchestration & XAI Framework
 
-## 🎯 Engineering Vision
+## Engineering Vision
 
 **Agent Harness** is a robust solution designed to bridge the gap between Proof of Concepts (PoC) and production-grade agentic systems. This framework does not just orchestrate language models; it establishes a standard for **Governance, Explainability, and Architectural Rigor**, enabling the deployment of reliable autonomous agents in complex corporate environments.
 
@@ -8,7 +8,7 @@ As a **Senior AI Engineer and Architect**, this project demonstrates my ability 
 
 ---
 
-## 🏗️ Architectural Blueprint
+## Architectural Blueprint
 
 The system is built upon the principles of **Hexagonal Architecture**, ensuring total **Inversion of Control (IoC)** and strategic decoupling.
 
@@ -23,7 +23,7 @@ The system is built upon the principles of **Hexagonal Architecture**, ensuring 
 
 ---
 
-## 🧠 Explainability (XAI) as a First-Class Citizen
+## Explainability (XAI) as a First-Class Citizen
 
 In enterprise environments, the "black box" nature of LLMs is an unacceptable risk. Agent Harness elevates explainability to a top-tier requirement.
 
@@ -32,7 +32,7 @@ In enterprise environments, the "black box" nature of LLMs is an unacceptable ri
 
 ---
 
-## 🛡️ Governance & Human-In-The-Loop (HITL)
+## Governance & Human-In-The-Loop (HITL)
 
 I have designed and implemented an advanced **Interceptor Pattern** to manage security in high-impact operations.
 
@@ -42,7 +42,7 @@ I have designed and implemented an advanced **Interceptor Pattern** to manage se
 
 ---
 
-## 📡 Observability and Enterprise Readiness (Day 2 Operations)
+## Observability and Enterprise Readiness (Day 2 Operations)
 
 The project addresses critical operational challenges in the AI application lifecycle.
 
@@ -65,7 +65,7 @@ The project addresses critical operational challenges in the AI application life
 
 ---
 
-## 📂 System Archetype
+## System Archetype
 
 ```text
 src/
