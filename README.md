@@ -10,7 +10,7 @@ This project as part of my portfolio showcases my ability to architect scalable,
 
 ## Architectural Blueprint
 
-The system is built upon the principles of **Hexagonal Architecture**, ensuring total **Inversion of Control (IoC)** and strategic decoupling.
+The system is built upon the principles of **Clean Architecture**, ensuring total **Inversion of Control (IoC)** and strategic decoupling.
 
 ### Applied Strategic Principles:
 
@@ -70,13 +70,13 @@ The project addresses critical operational challenges in the AI application life
 ```text
 src/
 ├── adapter/          # Infrastructure (Technical implementation details)
-│   ├── agent/        # LangGraph Adapter & Graph Strategies
-│   ├── memory/       # Persistence Repositories (Postgres/Redis)
+│   ├── agent/        # Any AI Framework (LangGraph, CrewAI, etc.)
+│   ├── memory/       # Persistence Repositories (Postgres/Redis, etc.)
 │   └── rest/         # External Communication Layer
-├── core/             # Domain (Pure Logic and Contracts)
-│   ├── ports/        # System Interfaces (Total abstraction)
+├── core/             # Domain (Business Logic and Contracts)
+│   ├── ports/        # System Interfaces
 │   └── tools/        # Agnostic business tool definitions
 └── utils/            # Platform Cross-cutting (Logging, Tracing, Metrics)
 ```
 
-This repository is a manifestation of my **AI Engineering** philosophy: the success of AI depends not just on the model, but on the solidity of the software engineering surrounding it.
+This repository is a manifestation of my **AI Engineering** philosophy: the success of AI Agents depends not just on the model, but on the solidity of the software engineering surrounding it and the components that enable its operation.
