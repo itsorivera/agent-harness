@@ -12,6 +12,8 @@ This project as part of my portfolio showcases my ability to architect scalable,
 
 The system is built upon the principles of **Clean Architecture**, ensuring total **Inversion of Control (IoC)** and strategic decoupling.
 
+![AI Agent System Architecture](/doc/assets/ai-agent-system.png)
+
 ### Applied Strategic Principles:
 
 - **Domain Isolation**: The system's core (`src/core`) is infrastructure-agnostic. It has no dependencies on databases, external APIs, or specific AI orchestration frameworks.
