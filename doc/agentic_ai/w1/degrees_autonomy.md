@@ -4,7 +4,7 @@ This document formalizes the operational spectrum of autonomy within AI systems 
 
 ## 1. The Agentic Spectrum
 
-The term "agentic" is most usefully applied as a continuous architectural adjective rather than a binary categorization. In classical Artificial Intelligence (GOFAI) and Reinforcement Learning, the term "agent" possesses a strict mathematical definition. As formally defined by Russell & Norvig's concept of _rational agents_—and practically implemented via Markov Decision Processes—an agent is an autonomous entity that perceives discrete environmental states and calculates actions to systematically maximize a specific performance measure or objective reward function.
+The term "agentic" is most usefully applied as a continuous architectural adjective rather than a binary categorization. In classical Artificial Intelligence (GOFAI) and Reinforcement Learning, the term "agent" possesses a strict mathematical definition. As formally established in **[_Artificial Intelligence: A Modern Approach_ (Russell & Norvig)](http://aima.cs.berkeley.edu/)** through the framework of _rational agents_—and practically implemented in reinforcement learning texts like **[_Reinforcement Learning: An Introduction_ (Sutton & Barto)](http://incompleteideas.net/book/the-book-2nd.html)** via **[Markov Decision Processes (MDP)](https://en.wikipedia.org/wiki/Markov_decision_process)**—an agent is an autonomous entity that perceives discrete environmental states and calculates actions to systematically maximize a specific performance measure or objective reward function.
 
 With the advent of Generative AI, the engineering community engaged in counterproductive taxonomic debates: because chaining LLM prompts rarely constitutes execution within a strict Markovian environment with a formal reward mechanism, classical AI engineers rejected labeling these generative scripts as "true agents." To circumvent this semantic gatekeeping and re-focus on practical software production, the framework transitions to the adjective _agentic_. Acknowledging that modern LLM autonomy is not a binary switch, systems are instead architected and evaluated across a continuous operational capability spectrum.
 
@@ -25,12 +25,12 @@ Occupying the middle of the spectrum, these implementations permit the LLM to ma
 
 ## 4. Highly Autonomous Architectures
 
-Highly autonomous systems delegate substantial execution logic directly to the LLM, trusting it to act as the core runtime orchestrator.
+Highly autonomous systems delegate substantial execution logic directly to the LLM, trusting it to act as the core runtime orchestrator. This dynamic architectural loop is heavily grounded in the seminal **[ReAct (Reasoning and Acting) Framework](https://arxiv.org/abs/2210.03629)**, which formalized how language models can iteratively combine internal reasoning chains with active environmental tool extraction.
 
 ![High-Autonomy Architectures](/doc/assets/high_autonomy_architectures.png)
 _Source: [Agentic AI by Andrew Ng - DeepLearning.AI](https://www.deeplearning.ai/courses/agentic-ai/)_
 
-- **Implementation Mechanics:** The LLM independently determines the sequence of steps, dynamically deciding which external sources to integrate and when.
+- **Implementation Mechanics:** By implementing a ReAct-style loop, the LLM independently determines the Directed Acyclic Graph (DAG) sequence, dynamically deciding which external tools or sources to integrate and when.
 - **Operational Example:** Given the same essay prompt, the LLM autonomously decides whether to search the standard web, news sources, or the arXiv repository. The model decides how many pages to fetch, determines if a retrieved PDF necessitates calling a PDF-to-text converter, iterates through self-reflection (retrieving more data if necessary), or even writes entirely new functions to execute.
 - **Engineering Characteristics:** Enables highly flexible solutions for varying contexts. However, they remain highly experimental, inherently unpredictable, difficult to control, and are currently the subject of intense active research.
 
