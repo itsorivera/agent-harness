@@ -16,6 +16,8 @@ In traditional workflows, developers define the sequence of LLM calls in advance
 **Request**: "Find round sunglasses under $100 in stock."
 
 ![Retail Inventory Database](/doc/assets/retail-inventory-database.png)
+_Source: [Agentic AI by Andrew Ng](https://www.deeplearning.ai/courses/agentic-ai/)_
+
 
 1.  **Step 1**: Search product descriptions for "round."
 2.  **Step 2**: Cross-reference filtered IDs with inventory database.
@@ -23,12 +25,16 @@ In traditional workflows, developers define the sequence of LLM calls in advance
 4.  **Final Step**: Synthesize the results into a natural language response.
 
 ![Planning example: Retail Inventory Agent](/doc/assets/retail-inventory-agent.png)
+_Source: [Agentic AI by Andrew Ng](https://www.deeplearning.ai/courses/agentic-ai/)_
+
 
 ### Email Assistant
 
 **Request**: "Reply to Bob, confirm dinner, and archive the thread."
 
 ![Planning example: Email Assistant](/doc/assets/email-assistant.png)
+_Source: [Agentic AI by Andrew Ng](https://www.deeplearning.ai/courses/agentic-ai/)_
+
 
 1.  **Step 1**: Search for the specific email from "Bob" mentioning "dinner."
 2.  **Step 2**: Generate and send a reply using the `send_email` tool.
